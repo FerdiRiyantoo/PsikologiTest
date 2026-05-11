@@ -17,6 +17,7 @@ class AccessRequest extends Model
         'pendidikan_terakhir',
         'jurusan',
         'posisi_jabatan_terakhir',
+        'posisi_yang_dilamar',
         'tanggal_tes',
         'jenis_tes',
         'status',

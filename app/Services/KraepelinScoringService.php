@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\TestSession;
 use App\Models\KraepelinAnswer;
 use App\Models\KraepelinResult;
+use App\Models\TestSession;
 
 class KraepelinScoringService
 {
@@ -15,7 +15,7 @@ class KraepelinScoringService
         $this->testSession = $testSession;
     }
 
-    public function calculate()
+    public function calculate(): void
     {
         // 1. Ambil seluruh jawaban dari sesi ini
         $answers = KraepelinAnswer::where('test_session_id', $this->testSession->id)->get();
@@ -24,40 +24,75 @@ class KraepelinScoringService
             return;
         }
 
-        // 2. Siapkan wadah untuk agregasi per kolom
-        $correctPerColumn = [];
-        $attemptedPerColumn = [];
-        
-        $totalAnswered = $answers->count();
-        $totalCorrect = $answers->where('is_correct', true)->count();
+        // 2. Kelompokkan per kolom
+        $perColumn = [];
 
-        // 3. Kelompokkan data per kolom
         foreach ($answers as $answer) {
             $col = $answer->column_number;
-            
-            if (!isset($attemptedPerColumn[$col])) {
-                $attemptedPerColumn[$col] = 0;
-                $correctPerColumn[$col] = 0;
+
+            if (!isset($perColumn[$col])) {
+                $perColumn[$col] = [
+                    'answered' => 0,
+                    'correct'  => 0,
+                ];
             }
 
-            $attemptedPerColumn[$col]++;
-            if ($answer->is_correct) {
-                $correctPerColumn[$col]++;
+            // Hanya hitung jika user benar-benar mengisi jawaban
+            if (!is_null($answer->user_answer)) {
+                $perColumn[$col]['answered']++;
+
+                // Jawaban benar TIDAK BOLEH melebihi yang dijawab
+                if ($answer->is_correct) {
+                    $perColumn[$col]['correct']++;
+                }
             }
         }
 
-        // Susun ulang array agar index berurutan dari 1 sampai akhir
-        ksort($correctPerColumn);
-        $correctAnswersArray = array_values($correctPerColumn);
-        $totalColumns = count($correctAnswersArray);
+        // Urutkan berdasarkan nomor kolom
+        ksort($perColumn);
 
-        // 4. Kalkulasi 4 Indikator Utama
-        $paceScore = $this->calculatePace($totalCorrect, $totalColumns);
-        $accuracyScore = $this->calculateAccuracy($totalCorrect, $totalAnswered);
-        $enduranceScore = $this->calculateEndurance($correctAnswersArray);
-        $stabilityScore = $this->calculateStability($correctAnswersArray, $paceScore);
+        // 3. Validasi: pastikan correct <= answered di setiap kolom
+        foreach ($perColumn as $col => &$data) {
+            // Sanitasi: correct tidak boleh lebih dari answered
+            $data['correct'] = min($data['correct'], $data['answered']);
 
-        // 5. Simpan ke database KraepelinResult
+            // Hitung akurasi per kolom
+            $data['accuracy_pct'] = $data['answered'] > 0
+                ? round(($data['correct'] / $data['answered']) * 100, 1)
+                : 0;
+        }
+        unset($data); // putus referensi
+
+        // 4. Hitung total keseluruhan
+        $totalAnswered = array_sum(array_column($perColumn, 'answered'));
+        $totalCorrect  = array_sum(array_column($perColumn, 'correct'));
+
+        // Sanitasi global: total correct tidak boleh > total answered
+        $totalCorrect = min($totalCorrect, $totalAnswered);
+
+        // 5. Siapkan array nilai per kolom untuk kalkulasi indikator
+        $correctPerColumn  = array_column($perColumn, 'correct');
+        $answeredPerColumn = array_column($perColumn, 'answered');
+        $totalColumns      = count($perColumn);
+
+        // 6. Hitung 4 indikator
+        $paceScore      = $this->calculatePace($totalCorrect, $totalColumns);
+        $accuracyScore  = $this->calculateAccuracy($totalCorrect, $totalAnswered);
+        $enduranceScore = $this->calculateEndurance($correctPerColumn);
+        $stabilityScore = $this->calculateStability($correctPerColumn, $paceScore);
+
+        // 7. Susun raw_data sesuai format yang dibutuhkan view & PDF
+        $rawData = [];
+        foreach ($perColumn as $col => $data) {
+            $rawData[] = [
+                'column'       => $col,
+                'answered'     => $data['answered'],
+                'correct'      => $data['correct'],
+                'accuracy_pct' => $data['accuracy_pct'],
+            ];
+        }
+
+        // 8. Simpan hasil
         KraepelinResult::updateOrCreate(
             ['test_session_id' => $this->testSession->id],
             [
@@ -67,57 +102,56 @@ class KraepelinScoringService
                 'stability_score' => $stabilityScore,
                 'total_answered'  => $totalAnswered,
                 'total_correct'   => $totalCorrect,
-                'raw_data'        => [
-                    'correct_per_column'   => $correctPerColumn,
-                    'attempted_per_column' => $attemptedPerColumn
-                ]
+                'raw_data'        => $rawData,
             ]
         );
     }
 
-    private function calculatePace($totalCorrect, $totalColumns): float
+    // Kecepatan: rata-rata jawaban benar per kolom
+    private function calculatePace(int $totalCorrect, int $totalColumns): float
     {
         if ($totalColumns === 0) return 0;
         return round($totalCorrect / $totalColumns, 2);
     }
 
-    private function calculateAccuracy($totalCorrect, $totalAnswered): float
+    // Ketelitian: persentase jawaban benar dari yang dijawab
+    private function calculateAccuracy(int $totalCorrect, int $totalAnswered): float
     {
         if ($totalAnswered === 0) return 0;
         return round(($totalCorrect / $totalAnswered) * 100, 2);
     }
 
-    private function calculateEndurance(array $correctAnswersArray): float
+    // Ketahanan: selisih rata-rata paruh kedua vs paruh pertama
+    // Positif = meningkat, Negatif = menurun, 0 = stabil
+    private function calculateEndurance(array $correctPerColumn): float
     {
-        $total = count($correctAnswersArray);
+        $total = count($correctPerColumn);
         if ($total < 2) return 0;
 
-        $midPoint = (int) floor($total / 2);
-        
-        $firstHalf = array_slice($correctAnswersArray, 0, $midPoint);
-        $secondHalf = array_slice($correctAnswersArray, $midPoint);
+        $midPoint   = (int) floor($total / 2);
+        $firstHalf  = array_slice($correctPerColumn, 0, $midPoint);
+        $secondHalf = array_slice($correctPerColumn, $midPoint);
 
-        $avgFirst = count($firstHalf) > 0 ? array_sum($firstHalf) / count($firstHalf) : 0;
+        $avgFirst  = count($firstHalf)  > 0 ? array_sum($firstHalf)  / count($firstHalf)  : 0;
         $avgSecond = count($secondHalf) > 0 ? array_sum($secondHalf) / count($secondHalf) : 0;
 
-        // Ketahanan: Tren rata-rata paruh kedua dibandingkan paruh pertama
         return round($avgSecond - $avgFirst, 2);
     }
 
-    private function calculateStability(array $correctAnswersArray, $mean): float
+    // Keajegan: standar deviasi jawaban benar per kolom
+    // Makin kecil = makin stabil / ajeg
+    private function calculateStability(array $correctPerColumn, float $mean): float
     {
-        $total = count($correctAnswersArray);
+        $total = count($correctPerColumn);
         if ($total < 2) return 0;
 
         $sumOfSquares = 0;
-        foreach ($correctAnswersArray as $val) {
+        foreach ($correctPerColumn as $val) {
             $sumOfSquares += pow(($val - $mean), 2);
         }
 
-        // Menggunakan Standard Deviation (Simpangan Baku)
+        // Gunakan sample standard deviation (n-1)
         $variance = $sumOfSquares / ($total - 1);
         return round(sqrt($variance), 2);
     }
 }
-
-?>

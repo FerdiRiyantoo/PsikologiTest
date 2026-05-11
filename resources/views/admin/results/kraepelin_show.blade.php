@@ -1,10 +1,22 @@
 @extends('layouts.admin')
 @section('title', 'Hasil Kraepelin')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/showkraepelin.css') }}">
+@endpush
 @section('content')
 
-<div class="mb-3 d-flex gap-2">
-    <a href="{{ route('admin.results.index') }}" class="btn btn-sm btn-outline-secondary">← Kembali</a>
-</div>
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ route('admin.results.index') }}" class="btn btn-white shadow-sm rounded-3 px-3">
+                <i class="bi bi-arrow-left me-1"></i> Kembali
+            </a>
+            <h4 class="fw-bold mb-0 text-dark">Laporan Psikotes</h4>
+        </div>
+        <a href="{{ route('admin.results.pdf', $session->id) }}"
+           class="btn btn-danger shadow-sm rounded-3 px-4" target="_blank">
+            <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
+        </a>
+    </div>
 
 {{-- Info Peserta --}}
 <div class="card mb-4 border-primary">
@@ -17,7 +29,8 @@
                 <table class="table table-sm table-borderless mb-0">
                     <tr><th width="180">Nama</th><td>{{ $session->accessRequest->name }}</td></tr>
                     <tr><th>Email</th><td>{{ $session->accessRequest->email }}</td></tr>
-                    <tr><th>Jenis Tes</th><td><span class="badge bg-purple text-white">Kraepelin</span></td></tr>
+                    <tr><th>Jenis Tes</th><td><span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1" style="background:#f5f3ff; color:#6d28d9; font-size:11px; font-weight:600;"> <i class="bi bi-calculator"></i>Kraepelin
+                            </span></td></tr>
                 </table>
             </div>
             <div class="col-md-6">
@@ -26,7 +39,8 @@
                         <td>{{ $session->completed_at?->format('d F Y, H:i') ?? '-' }}</td></tr>
                     <tr><th>Durasi</th><td>
                         @if($session->started_at && $session->completed_at)
-                            {{ $session->started_at->diffInMinutes($session->completed_at) }} menit
+                            {{ number_format($session->started_at->diffInSeconds($session->completed_at) / 60, 1) }}
+                            <span class="small text-muted">Menit</span>
                         @else - @endif
                     </td></tr>
                 </table>

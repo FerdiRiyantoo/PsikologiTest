@@ -1,0 +1,110 @@
+.kraepelin-wrapper {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+.timer-bar {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.timer-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 4px;
+    transition:
+        width 1s linear,
+        background 0.5s;
+}
+.timer-fill.warning {
+    background: #f59e0b;
+}
+.timer-fill.danger {
+    background: #ef4444;
+}
+.digit-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 24px;
+    width: 100%;
+}
+.digit-pair {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-bottom: 1px solid #f1f5f9;
+    min-height: 44px;
+}
+.digit-pair:last-child {
+    border-bottom: none;
+}
+.digit-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.digit-sep {
+    font-size: 14px;
+    color: #94a3b8;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.digit-input {
+    width: 52px;
+    height: 36px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: #1e3a8a;
+    background: #f8faff;
+    outline: none;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+}
+.digit-input:focus {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+.digit-input.correct {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    color: #15803d;
+}
+.digit-input.wrong {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+.digit-input:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+.column-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+.hint-text {
+    font-size: 12px;
+    color: #94a3b8;
+    width: 60px;
+    text-align: right;
+    flex: 1;
+}
