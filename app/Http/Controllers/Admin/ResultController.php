@@ -14,15 +14,6 @@ class ResultController extends Controller
         $query = TestSession::with('accessRequest')
             ->where('status', 'completed');
 
-        // Filter berdasarkan tanggal
-        if ($request->filled('date_from')) {
-            $query->whereDate('completed_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('completed_at', '<=', $request->date_to);
-        }
-
-        // Filter berdasarkan nama peserta
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('accessRequest', function ($q) use ($search) {
@@ -31,20 +22,30 @@ class ResultController extends Controller
             });
         }
 
-        // Sorting berdasarkan durasi pengerjaan
+        if ($request->filled('jenis_tes')) {
+            $query->whereHas('accessRequest', function ($q) use ($request) {
+                $q->where('jenis_tes', $request->jenis_tes);
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('completed_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('completed_at', '<=', $request->date_to);
+        }
+
         $sortBy    = $request->get('sort_by', 'completed_at');
         $sortOrder = $request->get('sort_order', 'desc');
 
         if ($sortBy === 'durasi') {
-            // Sort by durasi (selisih started_at dan completed_at dalam detik)
             $query->orderByRaw(
                 $sortOrder === 'asc'
                     ? 'TIMESTAMPDIFF(SECOND, started_at, completed_at) ASC'
                     : 'TIMESTAMPDIFF(SECOND, started_at, completed_at) DESC'
             );
         } else {
-            $allowedSort = ['completed_at', 'started_at'];
-            $sortBy = in_array($sortBy, $allowedSort) ? $sortBy : 'completed_at';
+            $sortBy = in_array($sortBy, ['completed_at','started_at']) ? $sortBy : 'completed_at';
             $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
         }
 
@@ -55,21 +56,44 @@ class ResultController extends Controller
 
     public function show($id)
     {
-        $session = TestSession::with([
-            'accessRequest', 
-            'papiResult', 
-            'kraepelinResult'
+        $session  = TestSession::with([
+            'accessRequest', 'result', 'kraepelinResult'
         ])->findOrFail($id);
+
+        $jenisTes = strtolower($session->accessRequest->jenis_tes ?? 'papi');
+
+        if (in_array($jenisTes, ['krempelin', 'kraepelin'])) {
+            return view('admin.results.kraepelin_show', [
+                'session' => $session,
+                'result'  => $session->kraepelinResult,
+            ]);
+        }
 
         return view('admin.results.show', compact('session'));
     }
 
     public function exportPdf($id)
     {
-        $session = TestSession::with(['accessRequest', 'result'])->findOrFail($id);
+        $session  = TestSession::with([
+            'accessRequest', 'result', 'kraepelinResult'
+        ])->findOrFail($id);
+
+        $jenisTes = strtolower($session->accessRequest->jenis_tes ?? 'papi');
+        $name     = str_replace(' ', '-', strtolower($session->accessRequest->name));
+
+        // Pilih template PDF berdasarkan jenis tes
+        if (in_array($jenisTes, ['krempelin', 'kraepelin'])) {
+            $pdf = Pdf::loadView('admin.results.kraepelin_pdf', [
+                'session' => $session,
+                'result'  => $session->kraepelinResult,
+            ])->setPaper('a4', 'portrait');
+
+            return $pdf->download("hasil-kraepelin-{$name}.pdf");
+        }
+
         $pdf = Pdf::loadView('admin.results.pdf', compact('session'))
             ->setPaper('a4', 'portrait');
-        $filename = 'hasil-papi-' . str_replace(' ', '-', strtolower($session->accessRequest->name)) . '.pdf';
-        return $pdf->download($filename);
+
+        return $pdf->download("hasil-papi-{$name}.pdf");
     }
 }

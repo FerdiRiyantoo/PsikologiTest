@@ -9,6 +9,7 @@ class TestSession extends Model
     protected $fillable = [
         'access_request_id', 'status', 'started_at', 'completed_at'
     ];
+
     protected $casts = [
         'started_at'   => 'datetime',
         'completed_at' => 'datetime',
@@ -19,19 +20,27 @@ class TestSession extends Model
         return $this->belongsTo(AccessRequest::class);
     }
 
+    // Relasi ke hasil PAPI ← ini yang belum ada
+    public function result()
+    {
+        return $this->hasOne(PapiResult::class);
+    }
+
+    // Relasi ke jawaban PAPI
     public function answers()
     {
         return $this->hasMany(TestAnswer::class);
     }
 
-    public function PapiResult()
+    // Relasi ke hasil Kraepelin
+    public function kraepelinResult()
     {
-        // Parameter: (NamaModel, 'nama_kolom_foreign_key', 'nama_kolom_primary_key')
-        return $this->hasOne(PapiResult::class, 'test_session_id', 'id');
+        return $this->hasOne(KraepelinResult::class);
     }
 
-    public function KraepelinResult()
+    // Relasi ke jawaban Kraepelin
+    public function kraepelinAnswers()
     {
-        return $this->hasOne(KraepelinResult::class, 'test_session_id', 'id');
+        return $this->hasMany(KraepelinAnswer::class);
     }
 }

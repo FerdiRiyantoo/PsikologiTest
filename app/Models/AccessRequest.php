@@ -21,7 +21,12 @@ class AccessRequest extends Model
         'jenis_tes',
         'status',
         'access_code',
-        'approved_at',
+        'approved_at','magic_token', 'magic_token_expires_at',
+    ];
+
+    protected $casts = [
+        'magic_token_expires_at' => 'datetime',
+        'approved_at'            => 'datetime',
     ];
 
     public function testSession()

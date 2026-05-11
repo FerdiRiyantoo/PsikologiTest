@@ -181,7 +181,7 @@
         <div class="brand-wrapper mb-2">
             <h5 class="mb-0 fw-bold text-white d-flex align-items-center" style="letter-spacing: 1px;">
                 <i class="bi bi-hexagon-fill text-primary me-2"></i>
-                <span>PAPI<span class="text-primary">KOSTICK</span></span>
+                <span>Dashboard<span class="text-primary">Test</span></span>
             </h5>
         </div>
 

@@ -43,6 +43,25 @@
                                value="{{ request('search') }}">
                     </div>
 
+                    {{-- Filter Jenis Tes --}}
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold text-muted text-uppercase"
+                               style="letter-spacing:.5px">
+                            <i class="bi bi-journal-check me-1"></i>Jenis Tes
+                        </label>
+                        <select name="jenis_tes" class="form-select rounded-3">
+                            <option value="">Semua Jenis</option>
+                            <option value="PapiKostick"
+                                {{ request('jenis_tes') === 'PapiKostick' ? 'selected' : '' }}>
+                                PAPI-Kostick
+                            </option>
+                            <option value="Kraepelin"
+                                {{ request('jenis_tes') === 'Kraepelin' ? 'selected' : '' }}>
+                                Kraepelin
+                            </option>
+                        </select>
+                    </div>
+
                     {{-- Tanggal dari --}}
                     <div class="col-md-2">
                         <label class="form-label small fw-semibold text-muted text-uppercase"
@@ -67,61 +86,69 @@
                                value="{{ request('date_to') }}">
                     </div>
 
-                    {{-- Urutkan berdasarkan --}}
-                    <div class="col-md-2">
+                    {{-- Urutkan --}}
+                    <div class="col-md-1">
                         <label class="form-label small fw-semibold text-muted text-uppercase"
                                style="letter-spacing:.5px">
-                            <i class="bi bi-sort-down me-1"></i>Urutkan
+                            <i class="bi bi-sort-down me-1"></i>Urut
                         </label>
                         <select name="sort_by" class="form-select rounded-3">
                             <option value="completed_at"
                                 {{ request('sort_by', 'completed_at') === 'completed_at' ? 'selected' : '' }}>
-                                Waktu Selesai
+                                Waktu
                             </option>
                             <option value="durasi"
                                 {{ request('sort_by') === 'durasi' ? 'selected' : '' }}>
-                                Durasi Pengerjaan
+                                Durasi
                             </option>
                         </select>
                     </div>
 
                     {{-- Arah urutan --}}
-                    <div class="col-md-2">
+                    <div class="col-md-1">
                         <label class="form-label small fw-semibold text-muted text-uppercase"
                                style="letter-spacing:.5px">
-                            <i class="bi bi-arrow-down-up me-1"></i>Urutan
+                            <i class="bi bi-arrow-down-up me-1"></i>Arah
                         </label>
                         <select name="sort_order" class="form-select rounded-3">
                             <option value="desc"
                                 {{ request('sort_order', 'desc') === 'desc' ? 'selected' : '' }}>
-                                Terbaru / Terlama
+                                ↓ Desc
                             </option>
                             <option value="asc"
                                 {{ request('sort_order') === 'asc' ? 'selected' : '' }}>
-                                Terlama / Tercepat
+                                ↑ Asc
                             </option>
                         </select>
                     </div>
 
                     {{-- Tombol --}}
                     <div class="col-md-1">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary rounded-3 w-100" title="Terapkan Filter">
-                                <i class="bi bi-funnel-fill"></i>
-                            </button>
-                        </div>
+                        <button type="submit"
+                                class="btn btn-primary rounded-3 w-100"
+                                title="Terapkan Filter">
+                            <i class="bi bi-funnel-fill"></i>
+                        </button>
                     </div>
 
                 </div>
 
-                {{-- Info filter aktif --}}
-                @if(request()->hasAny(['search', 'date_from', 'date_to', 'sort_by', 'sort_order']))
+                {{-- Badge filter aktif --}}
+                @if(request()->hasAny(['search','date_from','date_to','jenis_tes','sort_by','sort_order']))
                 <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
                     <small class="text-muted">Filter aktif:</small>
 
                     @if(request('search'))
                     <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2">
                         <i class="bi bi-search me-1"></i>{{ request('search') }}
+                    </span>
+                    @endif
+
+                    @if(request('jenis_tes'))
+                    <span class="badge rounded-pill px-3 py-2
+                        {{ request('jenis_tes') === 'PapiKostick' ? 'bg-blue text-white' : 'bg-purple text-white' }}"
+                        style="background:{{ request('jenis_tes') === 'PapiKostick' ? '#2563eb' : '#7c3aed' }}">
+                        <i class="bi bi-journal-check me-1"></i>{{ request('jenis_tes') === 'PapiKostick' ? 'PapiKostick' : 'Kraepelin' }}
                     </span>
                     @endif
 
@@ -161,7 +188,7 @@
                     </span>
                 </h6>
 
-                {{-- Tombol sort cepat di header tabel --}}
+                {{-- Tombol sort cepat --}}
                 <div class="d-flex gap-2 align-items-center">
                     <small class="text-muted">Urut:</small>
                     @php
@@ -169,7 +196,6 @@
                         $currentOrder = request('sort_order', 'desc');
                     @endphp
 
-                    {{-- Toggle sort waktu selesai --}}
                     <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                             'sort_by'    => 'completed_at',
                             'sort_order' => ($currentSort === 'completed_at' && $currentOrder === 'desc') ? 'asc' : 'desc'
@@ -181,7 +207,6 @@
                         @endif
                     </a>
 
-                    {{-- Toggle sort durasi --}}
                     <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                             'sort_by'    => 'durasi',
                             'sort_order' => ($currentSort === 'durasi' && $currentOrder === 'desc') ? 'asc' : 'desc'
@@ -203,6 +228,12 @@
                         <th class="ps-4 text-muted small fw-bold text-uppercase py-3">
                             Nama Peserta
                         </th>
+
+                        {{-- Kolom Jenis Tes --}}
+                        <th class="text-muted small fw-bold text-uppercase py-3">
+                            Jenis Tes
+                        </th>
+
                         <th class="text-muted small fw-bold text-uppercase py-3">
                             <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                                     'sort_by'    => 'durasi',
@@ -217,6 +248,7 @@
                                 @endif
                             </a>
                         </th>
+
                         <th class="text-muted small fw-bold text-uppercase py-3">
                             <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                                     'sort_by'    => 'completed_at',
@@ -231,16 +263,25 @@
                                 @endif
                             </a>
                         </th>
+
                         <th class="text-center text-muted small fw-bold text-uppercase py-3">Status</th>
                         <th class="text-center text-muted small fw-bold text-uppercase py-3">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                 @forelse($sessions as $s)
+                @php
+                    $jenisTes = strtolower($s->accessRequest->jenis_tes ?? 'PapiKostick');
+                    $isPapi   = !in_array($jenisTes, ['krempelin', 'kraepelin']);
+                @endphp
                 <tr>
+                    {{-- Nama --}}
                     <td class="ps-4">
                         <div class="d-flex align-items-center">
-                            <div class="avatar-box me-3">
+                            <div class="avatar-box me-3"
+                                 style="background:{{ $isPapi ? '#eff6ff' : '#f5f3ff' }};
+                                        color:{{ $isPapi ? '#2563eb' : '#7c3aed' }};
+                                        border-color:{{ $isPapi ? '#bfdbfe' : '#ddd6fe' }};">
                                 {{ strtoupper(substr($s->accessRequest->name, 0, 1)) }}
                             </div>
                             <div>
@@ -252,6 +293,24 @@
                         </div>
                     </td>
 
+                    {{-- Jenis Tes --}}
+                    <td>
+                        @if($isPapi)
+                            <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                  style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600;">
+                                <i class="bi bi-person-lines-fill"></i>
+                                PAPI-Kostick
+                            </span>
+                        @else
+                            <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                  style="background:#f5f3ff; color:#6d28d9; font-size:11px; font-weight:600;">
+                                <i class="bi bi-calculator"></i>
+                                Kraepelin
+                            </span>
+                        @endif
+                    </td>
+
+                    {{-- Durasi --}}
                     <td>
                         @if($s->started_at && $s->completed_at)
                         @php
@@ -261,7 +320,7 @@
                             $decimalMinutes = number_format($seconds / 60, 1);
                         @endphp
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-stopwatch text-primary"></i>
+                            <i class="bi bi-stopwatch" style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
                             <div>
                                 <span class="small fw-semibold">{{ $decimalMinutes }}</span>
                                 <span class="text-muted" style="font-size:10px"> menit</span>
@@ -275,6 +334,7 @@
                         @endif
                     </td>
 
+                    {{-- Waktu Selesai --}}
                     <td>
                         <div class="small fw-semibold text-dark">
                             {{ $s->completed_at?->format('d M Y') ?? '-' }}
@@ -284,6 +344,7 @@
                         </div>
                     </td>
 
+                    {{-- Status --}}
                     <td class="text-center">
                         @if($s->completed_at)
                             <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2"
@@ -298,12 +359,14 @@
                         @endif
                     </td>
 
+                    {{-- Aksi --}}
                     <td class="text-center">
                         <div class="btn-group shadow-sm rounded-3 overflow-hidden">
                             <a href="{{ route('admin.results.show', $s->id) }}"
                                class="btn btn-sm btn-white border-end px-3"
                                title="Lihat Detail">
-                                <i class="bi bi-eye-fill text-primary"></i>
+                                <i class="bi bi-eye-fill"
+                                   style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
                             </a>
                             <a href="{{ route('admin.results.pdf', $s->id) }}"
                                class="btn btn-sm btn-white px-3"
@@ -316,7 +379,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center py-5">
+                    <td colspan="6" class="text-center py-5">
                         <div class="text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
                             <div class="fw-semibold">Tidak ada data ditemukan</div>
@@ -346,31 +409,16 @@
 <style>
     .avatar-box {
         width: 40px; height: 40px;
-        background: #f1f5f9;
-        color: #38bdf8;
         display: flex; align-items: center; justify-content: center;
         border-radius: 12px;
         font-weight: 800; font-size: 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid;
         transition: all 0.2s;
+        flex-shrink: 0;
     }
-    .btn-white {
-        background: #ffffff;
-        color: #64748b;
-    }
-    .btn-white:hover {
-        background: #f8fafc;
-        color: #0f172a;
-    }
-    .table thead th {
-        letter-spacing: 0.5px;
-        font-size: 11px;
-    }
-    tr:hover .avatar-box {
-        background: #38bdf8;
-        color: white;
-        border-color: #38bdf8;
-    }
+    .btn-white { background:#fff; color:#64748b; }
+    .btn-white:hover { background:#f8fafc; color:#0f172a; }
+    .table thead th { letter-spacing:0.5px; font-size:11px; }
     .form-control:focus, .form-select:focus {
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59,130,246,0.1);

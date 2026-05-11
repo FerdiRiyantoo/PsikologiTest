@@ -58,3 +58,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     });
 });
+
+// Magic link — akses langsung dari email (di luar middleware test.session)
+    Route::get('/magic/{token}', [AccessRequestController::class, 'magicLogin'])
+        ->name('magic.login');

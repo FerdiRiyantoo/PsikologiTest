@@ -190,9 +190,9 @@
     </table>
 </div>
 
-@if($session->result)
+@if($session->papiResult)
 @php
-$scales = $session->result->getScalesArray();
+$scales = $session->papiResult->getScalesArray();
 $categories = [
     'Leadership' => [
         'C' => ['label' => 'Leadership Role',          'desc' => 'Peran Pemimpin'],
@@ -303,7 +303,7 @@ $getScoreClass = function(int $score): string {
         @foreach($catScales as $scaleKey => $info)
         @php
             $scoreKey  = 'scale_' . strtolower($scaleKey);
-            $scoreVal  = $session->result->$scoreKey ?? 0;
+            $scoreVal  = $session->papiResult->$scoreKey ?? 0;
             $barWidth  = round(($scoreVal / 9) * 100);
             $barColor  = $getBarColor($scoreVal);
             $scoreClass = $getScoreClass($scoreVal);
@@ -343,7 +343,7 @@ $getScoreClass = function(int $score): string {
 
 {{-- ===== FOOTER ===== --}}
 <div class="footer">
-    <span class="footer-left">Dokumen ini digenerate secara otomatis oleh Sistem Psikotes PAPI-Kostick &nbsp;·&nbsp; Digitama Consulting</span>
+    <span class="footer-left">Dokumen inidigenerate secara otomatis oleh Sistem Psikotes PAPI-Kostick &nbsp;·&nbsp; Digitama Consulting</span>
     <span class="footer-right">{{ $session->accessRequest->name }} &nbsp;·&nbsp; {{ now()->format('d/m/Y H:i') }}</span>
 </div>
 

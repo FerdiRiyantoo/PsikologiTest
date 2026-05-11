@@ -31,6 +31,7 @@ class AccessRequestController extends Controller
             'alamat'                  => 'required|string',
             'pendidikan_terakhir'     => 'required|string|max:50',
             'jurusan'                 => 'required|string|max:100',
+            'posisi_yang_dilamar'     => 'required|string|max:100',
             'posisi_jabatan_terakhir' => 'required|string|max:100',
             'tanggal_tes'             => 'required|date',
             'jenis_tes'               => 'required|string',
@@ -46,6 +47,7 @@ class AccessRequestController extends Controller
             'alamat', 
             'pendidikan_terakhir', 
             'jurusan', 
+            'posisi_yang_dilamar',
             'posisi_jabatan_terakhir', 
             'tanggal_tes',
             'jenis_tes'
@@ -95,5 +97,51 @@ class AccessRequestController extends Controller
         }
 
         return redirect()->route('test.index');
+    }
+
+    public function magicLogin(string $token)
+    {
+        $accessRequest = AccessRequest::where('magic_token', $token)
+            ->where('status', 'approved')
+            ->first();
+
+        // Token tidak ditemukan
+        if (!$accessRequest) {
+            return redirect()->route('enter.code')
+                ->with('error', 'Link tidak valid atau sudah tidak aktif.');
+        }
+
+        // Token expired
+        if ($accessRequest->magic_token_expires_at &&
+            now()->isAfter($accessRequest->magic_token_expires_at)) {
+            return redirect()->route('enter.code')
+                ->with('error', 'Link sudah kadaluarsa. Gunakan kode akses manual.');
+        }
+
+        // Ambil atau buat sesi tes
+        $testSession = TestSession::firstOrCreate(
+            ['access_request_id' => $accessRequest->id],
+            ['status' => 'not_started']
+        );
+
+        // Tes sudah selesai
+        if ($testSession->status === 'completed') {
+            return redirect()->route('home')
+                ->with('error', 'Tes sudah pernah dikerjakan.');
+        }
+
+        // Set session
+        session(['test_session_id' => $testSession->id]);
+
+        // Routing berdasarkan jenis tes
+        $jenisTes = strtolower($accessRequest->jenis_tes ?? 'papi');
+
+        if ($jenisTes === 'krempelin' || $jenisTes === 'kraepelin') {
+            return redirect()->route('kraepelin.index')
+                ->with('success', 'Selamat datang, ' . $accessRequest->name . '! Tes Kraepelin siap dimulai.');
+        }
+
+        return redirect()->route('test.index')
+            ->with('success', 'Selamat datang, ' . $accessRequest->name . '! Tes PAPI-Kostick siap dimulai.');
     }
 }
