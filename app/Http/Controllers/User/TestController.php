@@ -120,7 +120,11 @@ class TestController extends Controller
             return redirect()->route('home');
         }
 
-        $testSession = TestSession::with(['accessRequest', 'papiResult'])->findOrFail($sessionId);
+        $testSession = TestSession::with([
+        'accessRequest',
+        'result',           // hasil PAPI
+        'kraepelinResult',  // hasil Kraepelin
+    ])->findOrFail($sessionId);
 
         return view('user.finish', compact('testSession'));
     }

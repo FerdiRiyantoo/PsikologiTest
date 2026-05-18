@@ -1,11 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Masukkan Kode Akses')
+
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/enter-code.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 @endpush
+
 @section('content')
-
-
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-7 col-lg-5">

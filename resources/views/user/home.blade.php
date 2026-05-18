@@ -11,11 +11,23 @@
         
         <div class="form-header">
             <h1>Lengkapi <span class="gradient-text">Data Diri</span></h1>
-            <p class="text-muted">Pastikan informasi yang Anda masukkan sudah benar untuk proses verifikasi tes.</p>
+            <p class="text-muted">Pastikan informasi yang Anda masukkan sudah <strong>benar</strong> untuk proses verifikasi tes.</p>
         </div>
+
+        {{-- Menampilkan Pesan Error Global jika ada --}}
+        @if ($errors->any())
+            <div class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">
+                <ul class="mb-0 small">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <form method="POST" action="{{ route('request.store') }}">
             @csrf
+
             <div class="row g-4">
                 <div class="col-lg-6">
                     <div class="main-form-card h-100">
@@ -55,7 +67,7 @@
                                 value="{{ old('usia') }}" min="15" max="99" required>
                             @error('usia') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-			            <div class="col-12">
+                        <div class="col-12">
                             <label class="form-label fw-semibold">Tanggal Lahir <span class="text-danger">*</span></label>
                             <input type="date" name="tanggal_lahir"
                                 class="form-control @error('tanggal_lahir') is-invalid @enderror"
@@ -104,14 +116,14 @@
                                 value="{{ old('jurusan') }}" required>
                             @error('jurusan') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Posisi yang Dilamar <span class="text-danger">*</span></label>
+                            <div class="col-12">
+                            <label class="form-label fw-semibold">Posisi yang dilamar <span class="text-danger">*</span></label>
                             <input type="text" name="posisi_yang_dilamar"
                                 class="form-control @error('posisi_yang_dilamar') is-invalid @enderror"
                                 value="{{ old('posisi_yang_dilamar') }}" required>
                             @error('posisi_yang_dilamar') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="col-12">
+                            <div class="col-12">
                             <label class="form-label fw-semibold">Posisi/Jabatan Terakhir <span class="text-danger">*</span></label>
                             <input type="text" name="posisi_jabatan_terakhir"
                                 class="form-control @error('posisi_jabatan_terakhir') is-invalid @enderror"
@@ -119,58 +131,54 @@
                             @error('posisi_jabatan_terakhir') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                             <div class="col-12">
-                            <label class="form-label fw-semibold">Nomor HP<span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">Nomor HP <span class="text-danger">*</span></label>
                             <input type="text" name="phone"
                                 class="form-control @error('phone') is-invalid @enderror"
-                                value="{{ old('phone') }}">
+                                value="{{ old('phone') }}" required>
                             @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            
 
+            {{-- Bagian Jadwal & Jenis Tes --}}
             <div class="main-form-card shadow-none border-0 mt-4" style="background-color: #f1f5f9 !important; border-radius: 20px;">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start d-flex align-items-center gap-3">
-                        <div class="icon-box" style="background: #fff;">
-                            <i class="fa fa-pencil"></i>
+                <div class="row g-4 align-items-end">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="icon-box" style="background: #fff; width: 40px; height: 40px; min-width:40px;">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h3 class="mb-0" style="font-size: 1.1rem;">Konfigurasi Tes</h3>
                         </div>
-                        <h3 class="mb-0">Pilih Jenis Tes</h3>
+                        <p class="small text-muted mb-0">Tentukan instrumen dan waktu pelaksanaan tes Anda.</p>
                     </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Jenis Tes <span class="text-danger">*</span></label>
-                        <select name="jenis_tes" id="jenis_tes" class="form-control" required>
-                        <option value="">-- Pilih Jenis Tes --</option>
-                        <option value="PapiKostick">PapiKostick</option>
-                        <option value="Kraepelin">Tes Koran (Kraepelin)</option>
+
+                    {{-- Pilihan Jenis Tes (Disesuaikan dengan Database) --}}
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Instrumen Tes <span class="text-danger">*</span></label>
+                        <select name="jenis_tes" class="form-select @error('jenis_tes') is-invalid @enderror" required>
+                            <option value="" selected disabled>-- Pilih Tes --</option>
+                            <option value="PapiKostick" {{ old('jenis_tes') == 'PapiKostick' ? 'selected' : '' }}>PAPI-Kostick</option>
+                            <option value="Kraepelin" {{ old('jenis_tes') == 'Kraepelin' ? 'selected' : '' }}>Kraepelin</option>
                         </select>
+                        @error('jenis_tes') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
                     </div>
-                </div>
-            </div>
-            
-            <div class="main-form-card shadow-none border-0 mt-4" style="background-color: #f1f5f9 !important; border-radius: 20px;">
-                <div class="row align-items-center">
-                    <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start d-flex align-items-center gap-3">
-                        <div class="icon-box" style="background: #fff;">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <h3 class="mb-0">Pilih Jadwal Tes</h3>
+
+                    {{-- Pilihan Tanggal --}}
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Tanggal Tes <span class="text-danger">*</span></label>
+                        <input type="date" name="tanggal_tes"
+                            class="form-control @error('tanggal_tes') is-invalid @enderror"
+                            value="{{ old('tanggal_tes') }}" required>
+                        @error('tanggal_tes') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tanggal Tes <span class="text-danger">*</span></label>
-                            <input type="date" name="tanggal_tes"
-                                class="form-control @error('tanggal_tes') is-invalid @enderror"
-                                value="{{ old('tanggal_tes') }}" required>
-                            @error('tanggal_tes') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
                 </div>
             </div>
 
             <div class="d-flex justify-content-center flex-wrap gap-3 mt-5">
-                <a href="{{ route('home') }}" class="btn-submit-modern bg-red text-muted border shadow-none">
+                <a href="{{ route('home') }}" class="btn-submit-modern btn-danger-custom text-white text-decoration-none">
                     Batalkan dan Kembali
                 </a>
                 <button type="submit" class="btn-submit-modern">
@@ -180,4 +188,7 @@
         </form>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 @endsection

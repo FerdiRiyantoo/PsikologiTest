@@ -129,6 +129,6 @@ class KraepelinController extends Controller
         session(['completed_session_id' => $testSession->id]);
         session()->forget('test_session_id');
 
-        return redirect()->route('kraepelin.finish');
+        return redirect()->route('test.finish');
     }
 }

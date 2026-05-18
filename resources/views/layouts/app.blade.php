@@ -6,6 +6,7 @@
     <title>@yield('title', 'Digitama Consulting - Psikotes PAPI-Kostick')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navbar.css') }}">
     @stack('styles')
@@ -71,24 +72,24 @@
             <a href="{{ route('panduan') }}"
                class="fw-semibold text-decoration-none"
                style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em;
-               color:{{ request()->routeIs('panduan') ? '#06b6d4' : '#1f2937' }}">
+               color:{{ request()->routeIs('panduan') ? '#11c6bd' : '#1f2937' }}">
                Panduan Tes
             </a>
             <a href="{{ route('register') }}"
                class="fw-semibold text-decoration-none"
                style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em;
-               color:{{ request()->routeIs('register') ? '#06b6d4' : '#1f2937' }}">
+               color:{{ request()->routeIs('register') ? '#11c6bd' : '#1f2937' }}">
                Daftar Tes
             </a>
             <a href="{{ route('enter.code') }}"
                class="fw-semibold text-decoration-none"
                style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em;
-               color:{{ request()->routeIs('enter.code') ? '#06b6d4' : '#1f2937' }}">
+               color:{{ request()->routeIs('enter.code') ? '#11c6bd' : '#1f2937' }}">
                Masukkan Kode
             </a>
             <a href="{{ route('admin.login') }}"
                style="font-size:0.8rem; text-transform:uppercase; letter-spacing:0.1em;
-               color:#fff; background:#06b6d4; padding:8px 16px;
+               color:#fff; background:#11c6bd; padding:8px 16px;
                border-radius:8px; width:fit-content; text-decoration:none; font-weight:700;">
                Login
             </a>
@@ -127,7 +128,12 @@
 
             {{-- Info --}}
             <div class="col-12 col-md-4">
-                <span class="footer-brand">DIGITAMA</span>
+                <a href="#" class="text-decoration-none d-inline-block mb-3" style="margin-top: -20px;">
+                    <img src="{{ asset('assets/Digitama.png') }}" 
+                        alt="Digitama Logo" 
+                        class="footer-logo"
+                        style="width: 180px; height: auto; object-fit: contain; filter: brightness(0) invert(1);">
+                </a>
                 <div class="footer-contact">
                     <p>
                         <i class="fas fa-map-marker-alt"></i>
@@ -145,7 +151,7 @@
                         <h4 class="footer-heading">Links</h4>
                         <div class="footer-links">
                             <a href="https://digitama.consulting/karir/">Karir</a>
-                            <a href="#">SPBE Knowledge</a>
+                            <a href="https://digitama.consulting/">SPBE Knowledge</a>
                             <a href="https://digitama.consulting/contact-digitama-consulting/">Contact</a>
                             <a href="https://digitama.consulting/portfolio-digitama-consulting/">Portfolio</a>
                         </div>
