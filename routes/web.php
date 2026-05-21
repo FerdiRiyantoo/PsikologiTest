@@ -20,9 +20,15 @@ Route::get('/panduan', [AccessRequestController::class, 'panduan'])->name('pandu
 
 // Tes (dilindungi session)
 Route::middleware('test.session')->group(function () {
+    Route::get('/test/instruksi', [TestController::class, 'instruksi'])->name('test.instruksi');
+    Route::post('/test/instruksi', [TestController::class, 'startTest'])->name('test.start');
+
     Route::get('/test', [TestController::class, 'index'])->name('test.index');
     Route::post('/test/answer', [TestController::class, 'saveAnswer'])->name('test.answer');
     Route::get('/test/result', [TestController::class, 'result'])->name('test.result');
+
+    Route::get('/kraepelin/instruksi', [KraepelinController::class, 'instruksi'])->name('kraepelin.instruksi');
+    Route::post('/kraepelin/instruksi', [KraepelinController::class, 'startTest'])->name('kraepelin.start');
     Route::get('/kraepelin', [KraepelinController::class, 'index'])->name('kraepelin.index');
     Route::post('/kraepelin/save', [KraepelinController::class, 'saveColumn'])->name('kraepelin.save');
 });

@@ -89,14 +89,14 @@ class AccessRequestController extends Controller
 
         session(['test_session_id' => $testSession->id]);
 
-        // Routing otomatis berdasarkan jenis tes
         $jenisTes = strtolower($accessRequest->jenis_tes ?? 'papi');
 
-        if ($jenisTes === 'krempelin' || $jenisTes === 'kraepelin') {
-            return redirect()->route('kraepelin.index');
+        // Redirect ke halaman instruksi dulu
+        if (in_array($jenisTes, ['krempelin', 'kraepelin'])) {
+            return redirect()->route('kraepelin.instruksi');
         }
 
-        return redirect()->route('test.index');
+        return redirect()->route('test.instruksi');
     }
 
     public function magicLogin(string $token)
@@ -136,12 +136,12 @@ class AccessRequestController extends Controller
         // Routing berdasarkan jenis tes
         $jenisTes = strtolower($accessRequest->jenis_tes ?? 'papi');
 
-        if ($jenisTes === 'krempelin' || $jenisTes === 'kraepelin') {
-            return redirect()->route('kraepelin.index')
-                ->with('success', 'Selamat datang, ' . $accessRequest->name . '! Tes Kraepelin siap dimulai.');
+       if ($jenisTes === 'krempelin' || $jenisTes === 'kraepelin') {
+        return redirect()->route('kraepelin.instruksi')
+            ->with('success', 'Selamat datang, ' . $accessRequest->name . '!');
         }
 
-        return redirect()->route('test.index')
-            ->with('success', 'Selamat datang, ' . $accessRequest->name . '! Tes PAPI-Kostick siap dimulai.');
-    }
-}
+        return redirect()->route('test.instruksi')
+            ->with('success', 'Selamat datang, ' . $accessRequest->name . '!');
+        }
+}   

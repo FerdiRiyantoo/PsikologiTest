@@ -23,7 +23,7 @@ class TestController extends Controller
         }
 
         if ($testSession->status === 'not_started') {
-            $testSession->update(['status' => 'in_progress', 'started_at' => now()]);
+            return redirect()->route('test.instruksi');
         }
 
         $questions = config('papi_questions');
@@ -55,6 +55,32 @@ class TestController extends Controller
             'total',
             'questions'
         ));
+    }
+
+    public function instruksi()
+    {
+        $sessionId   = session('test_session_id');
+        $testSession = TestSession::with('accessRequest')->findOrFail($sessionId);
+
+        // Jika sudah in_progress atau completed, skip instruksi
+        if ($testSession->status !== 'not_started') {
+            return redirect()->route('test.index');
+        }
+
+        return view('user.instruksi-papi', compact('testSession'));
+    }
+
+    public function startTest(Request $request)
+    {
+        $sessionId   = session('test_session_id');
+        $testSession = TestSession::findOrFail($sessionId);
+
+        $testSession->update([
+            'status'     => 'in_progress',
+            'started_at' => now(),
+        ]);
+
+        return redirect()->route('test.index');
     }
 
     public function saveAnswer(Request $request)

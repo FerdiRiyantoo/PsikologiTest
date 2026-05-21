@@ -1,0 +1,238 @@
+/* Ubah max-width agar memenuhi layar */
+.kraepelin-wrapper {
+    max-width: 1200px; /* atau gunakan 100% jika ingin benar-benar full edge-to-edge */
+    margin: 0 auto;
+    padding: 0 16px;
+}
+.timer-bar {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.timer-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 4px;
+    transition:
+        width 1s linear,
+        background 0.5s;
+}
+.timer-fill.warning {
+    background: #f59e0b;
+}
+.timer-fill.danger {
+    background: #ef4444;
+}
+
+/* Ubah dari Flex Column ke CSS Grid */
+.digit-column {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(220px, 1fr)
+    ); /* Responsif membagi kolom */
+    gap: 16px; /* Jarak antar soal */
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+}
+
+/* Ubah style tiap soal agar berbentuk box/card */
+.digit-pair {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: #f8fafc; /* Latar belakang abu-abu muda */
+    border: 1px solid #e2e8f0; /* Border untuk tiap kotak soal */
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 50px;
+}
+.digit-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    width: 30px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.digit-sep {
+    font-size: 16px;
+    color: #94a3b8;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.digit-input {
+    width: 52px;
+    height: 40px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: #1e3a8a;
+    background: #fff;
+    outline: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.digit-input:focus {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+.digit-input.correct {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    color: #15803d;
+}
+.digit-input.wrong {
+    border-color: #dc2626;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+.digit-input:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.column-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white;
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+/* ===== POPUP OVERLAY ===== */
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow-y: auto;
+}
+.popup-box {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden; /* ← hapus scrollbar horizontal */
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    animation: popIn 0.3s ease;
+    margin: auto;
+}
+
+/* Gambar instruksi — fit dalam popup */
+.instruksi-img {
+    width: 100%;
+    height: auto; /* ← auto agar proporsional */
+    max-height: 300px; /* ← batasi tinggi */
+    object-fit: contain; /* ← tampilkan full gambar */
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+    display: block;
+    background: #f8faff;
+}
+@keyframes popIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+.popup-header {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.popup-body {
+    padding: 24px;
+}
+.popup-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #f1f5f9;
+}
+.instruksi-img {
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+.instruksi-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.instruksi-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 14px;
+    color: #374151;
+}
+.instruksi-list li:last-child {
+    border-bottom: none;
+}
+.instruksi-list .num {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.btn-mulai {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-mulai:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(109, 40, 217, 0.4);
+    color: white;
+}
+.countdown-badge {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+}

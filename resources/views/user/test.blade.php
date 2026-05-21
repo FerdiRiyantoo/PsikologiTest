@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Tes Papikostick')
 @section('content')
+
 <div class="row justify-content-center">
     <div class="col-md-9">
 

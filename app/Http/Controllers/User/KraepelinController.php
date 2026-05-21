@@ -26,10 +26,7 @@ class KraepelinController extends Controller
         }
 
         if ($testSession->status === 'not_started') {
-            $testSession->update([
-                'status'     => 'in_progress',
-                'started_at' => now(),
-            ]);
+            return redirect()->route('kraepelin.instruksi');
         }
 
         $config = config('kraepelin');
@@ -65,6 +62,33 @@ class KraepelinController extends Controller
         ));
     }
 
+    public function instruksi()
+    {
+        $sessionId   = session('test_session_id');
+        $testSession = TestSession::with('accessRequest')->findOrFail($sessionId);
+
+        if ($testSession->status !== 'not_started') {
+            return redirect()->route('kraepelin.index');
+        }
+
+        $config = config('kraepelin');
+
+        return view('user.instruksi-kraepelin', compact('testSession', 'config'));
+    }
+
+    public function startTest(Request $request)
+    {
+        $sessionId   = session('test_session_id');
+        $testSession = TestSession::findOrFail($sessionId);
+
+        $testSession->update([
+            'status'     => 'in_progress',
+            'started_at' => now(),
+        ]);
+
+        return redirect()->route('kraepelin.index');
+    }
+
     public function saveColumn(Request $request)
     {
         $request->validate([
@@ -74,7 +98,7 @@ class KraepelinController extends Controller
 
         $sessionId    = session('test_session_id');
         $testSession  = TestSession::findOrFail($sessionId);
-        $columnNumber = $request->column_number; // ← harus didefinisikan SEBELUM dipakai
+        $columnNumber = $request->column_number; 
         $columnDigits = $this->getColumnDigits($columnNumber);
 
         // Hapus jawaban lama untuk kolom ini jika ada
