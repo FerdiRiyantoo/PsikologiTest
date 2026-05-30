@@ -176,234 +176,295 @@
             </form>
         </div>
     </div>
-
-    {{-- Main Table Card --}}
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white p-4 border-0">
-            <div class="d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0">
-                    Record Peserta
-                    <span class="badge bg-primary bg-opacity-10 text-primary ms-2 rounded-pill">
-                        {{ $sessions->total() }} data
-                    </span>
-                </h6>
-
-                {{-- Tombol sort cepat --}}
-                <div class="d-flex gap-2 align-items-center">
-                    <small class="text-muted">Urut:</small>
-                    @php
-                        $currentSort  = request('sort_by', 'completed_at');
-                        $currentOrder = request('sort_order', 'desc');
-                    @endphp
-
-                    <a href="{{ route('admin.results.index', array_merge(request()->query(), [
-                            'sort_by'    => 'completed_at',
-                            'sort_order' => ($currentSort === 'completed_at' && $currentOrder === 'desc') ? 'asc' : 'desc'
-                        ])) }}"
-                       class="btn btn-sm rounded-3 {{ $currentSort === 'completed_at' ? 'btn-primary' : 'btn-light border' }}">
-                        <i class="bi bi-calendar3 me-1"></i>Waktu
-                        @if($currentSort === 'completed_at')
-                            <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }}"></i>
-                        @endif
-                    </a>
-
-                    <a href="{{ route('admin.results.index', array_merge(request()->query(), [
-                            'sort_by'    => 'durasi',
-                            'sort_order' => ($currentSort === 'durasi' && $currentOrder === 'desc') ? 'asc' : 'desc'
-                        ])) }}"
-                       class="btn btn-sm rounded-3 {{ $currentSort === 'durasi' ? 'btn-primary' : 'btn-light border' }}">
-                        <i class="bi bi-stopwatch me-1"></i>Durasi
-                        @if($currentSort === 'durasi')
-                            <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }}"></i>
-                        @endif
-                    </a>
+    
+    {{-- ============================== --}}
+    {{-- MULAI FORM UNTUK BULK ACTION --}}
+    {{-- ============================== --}}
+    <form method="POST" action="{{ route('admin.results.bulk') }}" id="bulkForm">
+        @csrf
+        
+        {{-- Bulk Action Bar (Glassmorphism Effect) --}}
+        <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
+            <div class="card-body py-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-3">
+                        <i class="bi bi-check2-square me-2"></i>
+                        <span class="fw-bold" id="selectedCount">0</span> <small>Terpilih</small>
+                    </div>
+                    <div class="vr mx-1 d-none d-md-block"></div>
+                    <select name="action" class="form-select form-select-sm border-0 bg-light" style="width:200px; border-radius: 8px;" required>
+                        <option value="">-- Pilih Aksi Massal --</option>
+                        <option value="delete">Hapus Permanen</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 8px;" onclick="return confirmBulk()">
+                        Terapkan
+                    </button>
+                </div>
+                
+                <div class="btn-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                    <button type="button" class="btn btn-sm btn-white border-end" onclick="selectAll()">Pilih Semua</button>
+                    <button type="button" class="btn btn-sm btn-white" onclick="deselectAll()">Batal</button>
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 text-muted small fw-bold text-uppercase py-3">
-                            Nama Peserta
-                        </th>
+        {{-- Main Table Card --}}
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white p-4 border-0">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h6 class="fw-bold mb-0">
+                        Record Peserta
+                        <span class="badge bg-primary bg-opacity-10 text-primary ms-2 rounded-pill">
+                            {{ $sessions->total() }} data
+                        </span>
+                    </h6>
 
-                        {{-- Kolom Jenis Tes --}}
-                        <th class="text-muted small fw-bold text-uppercase py-3">
-                            Jenis Tes
-                        </th>
-
-                        <th class="text-muted small fw-bold text-uppercase py-3">
-                            <a href="{{ route('admin.results.index', array_merge(request()->query(), [
-                                    'sort_by'    => 'durasi',
-                                    'sort_order' => ($currentSort === 'durasi' && $currentOrder === 'desc') ? 'asc' : 'desc'
-                                ])) }}"
-                               class="text-muted text-decoration-none d-flex align-items-center gap-1">
-                                Durasi
-                                @if($currentSort === 'durasi')
-                                    <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                @else
-                                    <i class="bi bi-arrow-down-up opacity-25"></i>
-                                @endif
-                            </a>
-                        </th>
-
-                        <th class="text-muted small fw-bold text-uppercase py-3">
-                            <a href="{{ route('admin.results.index', array_merge(request()->query(), [
-                                    'sort_by'    => 'completed_at',
-                                    'sort_order' => ($currentSort === 'completed_at' && $currentOrder === 'desc') ? 'asc' : 'desc'
-                                ])) }}"
-                               class="text-muted text-decoration-none d-flex align-items-center gap-1">
-                                Waktu Selesai
-                                @if($currentSort === 'completed_at')
-                                    <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }} text-primary"></i>
-                                @else
-                                    <i class="bi bi-arrow-down-up opacity-25"></i>
-                                @endif
-                            </a>
-                        </th>
-
-                        <th class="text-center text-muted small fw-bold text-uppercase py-3">Status</th>
-                        <th class="text-center text-muted small fw-bold text-uppercase py-3">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @forelse($sessions as $s)
-                @php
-                    $jenisTes = strtolower($s->accessRequest->jenis_tes ?? 'PapiKostick');
-                    $isPapi   = !in_array($jenisTes, ['krempelin', 'kraepelin']);
-                @endphp
-                <tr>
-                    {{-- Nama --}}
-                    <td class="ps-4">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-box me-3"
-                                 style="background:{{ $isPapi ? '#eff6ff' : '#f5f3ff' }};
-                                        color:{{ $isPapi ? '#2563eb' : '#7c3aed' }};
-                                        border-color:{{ $isPapi ? '#bfdbfe' : '#ddd6fe' }};">
-                                {{ strtoupper(substr($s->accessRequest->name, 0, 1)) }}
-                            </div>
-                            <div>
-                                <div class="fw-bold text-dark mb-0" style="font-size:14px">
-                                    {{ $s->accessRequest->name }}
-                                </div>
-                                <div class="text-muted small">{{ $s->accessRequest->email }}</div>
-                            </div>
-                        </div>
-                    </td>
-
-                    {{-- Jenis Tes --}}
-                    <td>
-                        @if($isPapi)
-                            <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
-                                  style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600;">
-                                <i class="bi bi-person-lines-fill"></i>
-                                PAPI-Kostick
-                            </span>
-                        @else
-                            <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
-                                  style="background:#f5f3ff; color:#6d28d9; font-size:11px; font-weight:600;">
-                                <i class="bi bi-calculator"></i>
-                                Kraepelin
-                            </span>
-                        @endif
-                    </td>
-
-                    {{-- Durasi --}}
-                    <td>
-                        @if($s->started_at && $s->completed_at)
+                    {{-- Tombol sort cepat --}}
+                    <div class="d-flex gap-2 align-items-center">
+                        <small class="text-muted">Urut:</small>
                         @php
-                            $seconds        = $s->started_at->diffInSeconds($s->completed_at);
-                            $menit          = floor($seconds / 60);
-                            $detik          = $seconds % 60;
-                            $decimalMinutes = number_format($seconds / 60, 1);
+                            $currentSort  = request('sort_by', 'completed_at');
+                            $currentOrder = request('sort_order', 'desc');
                         @endphp
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-stopwatch" style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
-                            <div>
-                                <span class="small fw-semibold">{{ $decimalMinutes }}</span>
-                                <span class="text-muted" style="font-size:10px"> menit</span>
-                                <div class="text-muted" style="font-size:10px">
-                                    ({{ $menit }}m {{ $detik }}s)
+
+                        <a href="{{ route('admin.results.index', array_merge(request()->query(), [
+                                'sort_by'    => 'completed_at',
+                                'sort_order' => ($currentSort === 'completed_at' && $currentOrder === 'desc') ? 'asc' : 'desc'
+                            ])) }}"
+                           class="btn btn-sm rounded-3 {{ $currentSort === 'completed_at' ? 'btn-primary' : 'btn-light border' }}">
+                            <i class="bi bi-calendar3 me-1"></i>Waktu
+                            @if($currentSort === 'completed_at')
+                                <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+
+                        <a href="{{ route('admin.results.index', array_merge(request()->query(), [
+                                'sort_by'    => 'durasi',
+                                'sort_order' => ($currentSort === 'durasi' && $currentOrder === 'desc') ? 'asc' : 'desc'
+                            ])) }}"
+                           class="btn btn-sm rounded-3 {{ $currentSort === 'durasi' ? 'btn-primary' : 'btn-light border' }}">
+                            <i class="bi bi-stopwatch me-1"></i>Durasi
+                            @if($currentSort === 'durasi')
+                                <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            {{-- Checkbox Master (Pilih Semua) --}}
+                            <th class="ps-4 py-3" style="width: 40px;">
+                                <input class="form-check-input shadow-sm" type="checkbox" id="checkAll">
+                            </th>
+
+                            <th class="ps-2 text-muted small fw-bold text-uppercase py-3">
+                                Nama Peserta
+                            </th>
+
+                            {{-- Kolom Jenis Tes --}}
+                            <th class="text-muted small fw-bold text-uppercase py-3">
+                                Jenis Tes
+                            </th>
+
+                            <th class="text-muted small fw-bold text-uppercase py-3">
+                                <a href="{{ route('admin.results.index', array_merge(request()->query(), [
+                                        'sort_by'    => 'durasi',
+                                        'sort_order' => ($currentSort === 'durasi' && $currentOrder === 'desc') ? 'asc' : 'desc'
+                                    ])) }}"
+                                   class="text-muted text-decoration-none d-flex align-items-center gap-1">
+                                    Durasi
+                                    @if($currentSort === 'durasi')
+                                        <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }} text-primary"></i>
+                                    @else
+                                        <i class="bi bi-arrow-down-up opacity-25"></i>
+                                    @endif
+                                </a>
+                            </th>
+
+                            <th class="text-muted small fw-bold text-uppercase py-3">
+                                <a href="{{ route('admin.results.index', array_merge(request()->query(), [
+                                        'sort_by'    => 'completed_at',
+                                        'sort_order' => ($currentSort === 'completed_at' && $currentOrder === 'desc') ? 'asc' : 'desc'
+                                    ])) }}"
+                                   class="text-muted text-decoration-none d-flex align-items-center gap-1">
+                                    Waktu Selesai
+                                    @if($currentSort === 'completed_at')
+                                        <i class="bi bi-arrow-{{ $currentOrder === 'asc' ? 'up' : 'down' }} text-primary"></i>
+                                    @else
+                                        <i class="bi bi-arrow-down-up opacity-25"></i>
+                                    @endif
+                                </a>
+                            </th>
+
+                            <th class="text-center text-muted small fw-bold text-uppercase py-3">Status</th>
+                            <th class="text-center text-muted small fw-bold text-uppercase py-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($sessions as $s)
+                    @php
+                        $jenisTes = strtolower($s->accessRequest->jenis_tes ?? 'PapiKostick');
+                        $isPapi   = !in_array($jenisTes, ['krempelin', 'kraepelin']);
+                    @endphp
+                    <tr>
+                        {{-- Checkbox Item --}}
+                        <td class="ps-4">
+                            <input class="form-check-input item-check shadow-sm" type="checkbox" name="ids[]" value="{{ $s->id }}">
+                        </td>
+
+                        {{-- Nama --}}
+                        <td class="ps-2">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-box me-3"
+                                     style="background:{{ $isPapi ? '#eff6ff' : '#f5f3ff' }};
+                                            color:{{ $isPapi ? '#2563eb' : '#7c3aed' }};
+                                            border-color:{{ $isPapi ? '#bfdbfe' : '#ddd6fe' }};">
+                                    {{ strtoupper(substr($s->accessRequest->name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark mb-0" style="font-size:14px">
+                                        {{ $s->accessRequest->name }}
+                                    </div>
+                                    <div class="text-muted small">{{ $s->accessRequest->email }}</div>
                                 </div>
                             </div>
-                        </div>
-                        @else
-                            <span class="text-muted small">-</span>
-                        @endif
-                    </td>
+                        </td>
 
-                    {{-- Waktu Selesai --}}
-                    <td>
-                        <div class="small fw-semibold text-dark">
-                            {{ $s->completed_at?->format('d M Y') ?? '-' }}
-                        </div>
-                        <div class="text-muted" style="font-size:11px">
-                            Pukul {{ $s->completed_at?->format('H:i') ?? '-' }} WIB
-                        </div>
-                    </td>
+                        {{-- Jenis Tes --}}
+                        <td>
+                            @if($isPapi)
+                                <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                      style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600;">
+                                    <i class="bi bi-person-lines-fill"></i>
+                                    PAPI-Kostick
+                                </span>
+                            @else
+                                <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
+                                      style="background:#f5f3ff; color:#6d28d9; font-size:11px; font-weight:600;">
+                                    <i class="bi bi-calculator"></i>
+                                    Kraepelin
+                                </span>
+                            @endif
+                        </td>
 
-                    {{-- Status --}}
-                    <td class="text-center">
-                        @if($s->completed_at)
-                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2"
-                                  style="font-size:11px">
-                                <i class="bi bi-check-circle me-1"></i>Selesai
-                            </span>
-                        @else
-                            <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2"
-                                  style="font-size:11px">
-                                <i class="bi bi-hourglass-split me-1"></i>Berlangsung
-                            </span>
-                        @endif
-                    </td>
+                        {{-- Durasi --}}
+                        <td>
+                            @if($s->started_at && $s->completed_at)
+                            @php
+                                $seconds        = $s->started_at->diffInSeconds($s->completed_at);
+                                $menit          = floor($seconds / 60);
+                                $detik          = $seconds % 60;
+                                $decimalMinutes = number_format($seconds / 60, 1);
+                            @endphp
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-stopwatch" style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
+                                <div>
+                                    <span class="small fw-semibold">{{ $decimalMinutes }}</span>
+                                    <span class="text-muted" style="font-size:10px"> menit</span>
+                                    <div class="text-muted" style="font-size:10px">
+                                        ({{ $menit }}m {{ $detik }}s)
+                                    </div>
+                                </div>
+                            </div>
+                            @else
+                                <span class="text-muted small">-</span>
+                            @endif
+                        </td>
 
-                    {{-- Aksi --}}
-                    <td class="text-center">
-                        <div class="btn-group shadow-sm rounded-3 overflow-hidden">
-                            <a href="{{ route('admin.results.show', $s->id) }}"
-                               class="btn btn-sm btn-white border-end px-3"
-                               title="Lihat Detail">
-                                <i class="bi bi-eye-fill"
-                                   style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
-                            </a>
-                            <a href="{{ route('admin.results.pdf', $s->id) }}"
-                               class="btn btn-sm btn-white px-3"
-                               title="Unduh PDF"
-                               target="_blank">
-                                <i class="bi bi-file-pdf-fill text-danger"></i>
-                            </a>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center py-5">
-                        <div class="text-muted">
-                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
-                            <div class="fw-semibold">Tidak ada data ditemukan</div>
-                            <small>Coba ubah filter pencarian Anda</small>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
-                </tbody>
-            </table>
-        </div>
+                        {{-- Waktu Selesai --}}
+                        <td>
+                            <div class="small fw-semibold text-dark">
+                                {{ $s->completed_at?->format('d M Y') ?? '-' }}
+                            </div>
+                            <div class="text-muted" style="font-size:11px">
+                                Pukul {{ $s->completed_at?->format('H:i') ?? '-' }} WIB
+                            </div>
+                        </td>
 
-        @if($sessions->hasPages())
-        <div class="card-footer bg-white border-0 py-3 px-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted">
-                    Menampilkan {{ $sessions->firstItem() }}–{{ $sessions->lastItem() }}
-                    dari {{ $sessions->total() }} data
-                </small>
-                {{ $sessions->links() }}
+                        {{-- Status --}}
+                        <td class="text-center">
+                            @if($s->completed_at)
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2"
+                                      style="font-size:11px">
+                                    <i class="bi bi-check-circle me-1"></i>Selesai
+                                </span>
+                            @else
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2"
+                                      style="font-size:11px">
+                                    <i class="bi bi-hourglass-split me-1"></i>Berlangsung
+                                </span>
+                            @endif
+                        </td>
+
+                        {{-- Aksi --}}
+                        <td class="text-center">
+                            <div class="btn-group shadow-sm rounded-3 overflow-hidden d-inline-flex">
+                                {{-- Tombol Detail --}}
+                                <a href="{{ route('admin.results.show', $s->id) }}"
+                                class="btn btn-sm btn-white border-end px-3 action-btn"
+                                title="Lihat Detail">
+                                    <i class="bi bi-eye-fill"
+                                    style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
+                                </a>
+                                
+                                {{-- Tombol PDF --}}
+                                <a href="{{ route('admin.results.pdf', $s->id) }}"
+                                class="btn btn-sm btn-white border-end px-3 action-btn"
+                                title="Unduh PDF"
+                                target="_blank">
+                                    <i class="bi bi-file-pdf-fill text-danger"></i>
+                                </a>
+
+                                {{-- Tombol Hapus --}}
+                                <form action="{{ route('admin.results.destroy', $s->id) }}" method="POST" class="m-0 p-0">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="btn btn-sm btn-white px-3 action-btn action-btn-delete" 
+                                            title="Hapus Permanen" 
+                                            onclick="return confirm('Apakah Anda yakin ingin menghapus permanen data hasil tes milik {{ $s->accessRequest->name }}?')">
+                                        <i class="bi bi-trash3-fill text-secondary"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                                <div class="fw-semibold">Tidak ada data ditemukan</div>
+                                <small>Coba ubah filter pencarian Anda</small>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                    </tbody>
+                </table>
             </div>
+
+            @if($sessions->hasPages())
+            <div class="card-footer bg-white border-0 py-3 px-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Menampilkan {{ $sessions->firstItem() }}–{{ $sessions->lastItem() }}
+                        dari {{ $sessions->total() }} data
+                    </small>
+                    {{ $sessions->links() }}
+                </div>
+            </div>
+            @endif
         </div>
-        @endif
-    </div>
+    </form>
+    {{-- ============================== --}}
+    {{-- AKHIR FORM BULK ACTION --}}
+    {{-- ============================== --}}
+
 </div>
 
 <style>
@@ -423,5 +484,94 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
     }
+    /* Animasi Hover untuk Tombol Aksi */
+    .action-btn {
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .action-btn:hover {
+        background-color: #f8fafc; /* Memberikan efek redup/abu-abu sangat terang */
+    }
+
+    .action-btn i {
+        display: inline-block;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efek membesar membal (bouncy) */
+    }
+
+    .action-btn:hover i {
+        transform: scale(1.2); /* Ikon membesar 20% saat dihover */
+    }
+
+    /* Khusus tombol hapus: ikon berubah menjadi merah saat dihover */
+    .action-btn-delete:hover i.text-secondary {
+        color: #ef4444 !important; /* Warna merah tajam */
+    }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkAll = document.getElementById('checkAll');
+        const itemChecks = document.querySelectorAll('.item-check');
+        const selectedCount = document.getElementById('selectedCount');
+
+        // Fungsi update angka badge terpilih
+        function updateCount() {
+            const count = document.querySelectorAll('.item-check:checked').length;
+            if(selectedCount) selectedCount.textContent = count;
+        }
+
+        // Event listener Master Checkbox (Check All di header)
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                itemChecks.forEach(check => {
+                    check.checked = this.checked;
+                });
+                updateCount();
+            });
+        }
+
+        // Event listener untuk setiap item checkbox
+        itemChecks.forEach(check => {
+            check.addEventListener('change', function() {
+                const allChecked = document.querySelectorAll('.item-check:checked').length === itemChecks.length;
+                if(checkAll) checkAll.checked = allChecked;
+                updateCount();
+            });
+        });
+    });
+
+    // Fungsi untuk tombol "Pilih Semua" (di Action Bar)
+    function selectAll() {
+        const checkAll = document.getElementById('checkAll');
+        if(checkAll) checkAll.checked = true;
+        document.querySelectorAll('.item-check').forEach(c => c.checked = true);
+        document.getElementById('selectedCount').textContent = document.querySelectorAll('.item-check').length;
+    }
+
+    // Fungsi untuk tombol "Batal" (di Action Bar)
+    function deselectAll() {
+        const checkAll = document.getElementById('checkAll');
+        if(checkAll) checkAll.checked = false;
+        document.querySelectorAll('.item-check').forEach(c => c.checked = false);
+        document.getElementById('selectedCount').textContent = '0';
+    }
+
+    // Validasi alert sebelum menekan tombol "Terapkan"
+    function confirmBulk() {
+        const action = document.querySelector('select[name="action"]').value;
+        const count = document.querySelectorAll('.item-check:checked').length;
+        
+        if (count === 0) {
+            alert('Silakan pilih minimal satu data peserta terlebih dahulu!');
+            return false; // Membatalkan submit form
+        }
+        
+        if (!action) {
+            alert('Silakan pilih aksi massal terlebih dahulu dari menu dropdown!');
+            return false; // Membatalkan submit form
+        }
+        
+        return confirm(`Apakah Anda yakin ingin menerapkan aksi ini pada ${count} data terpilih?`);
+    }
+</script>
 @endsection

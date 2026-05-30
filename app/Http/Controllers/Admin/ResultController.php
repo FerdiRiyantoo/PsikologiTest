@@ -96,4 +96,50 @@ class ResultController extends Controller
 
         return $pdf->download("hasil-papi-{$name}.pdf");
     }
+
+    public function destroy($id)
+    {
+        $session = TestSession::with(['accessRequest', 'result', 'kraepelinResult'])->findOrFail($id);
+
+        // Hapus hasil tes berdasarkan jenis
+        $session->result?->delete();
+        $session->kraepelinResult?->delete();
+
+        // Hapus jawaban
+        $session->answers()->delete();
+        $session->kraepelinAnswers()->delete();
+
+        // Hapus sesi tes
+        $session->delete();
+
+        return back()->with('success', 'Data hasil tes berhasil dihapus.');
+    }
+
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'action'       => 'required|in:delete',
+            'ids'          => 'required|array',
+        ]);
+
+        $ids = $request->ids;
+
+        foreach ($ids as $id) {
+            $session = TestSession::with(['accessRequest', 'result', 'kraepelinResult'])->find($id);
+            if (!$session) continue;
+
+            // Hapus hasil tes berdasarkan jenis
+            $session->result?->delete();
+            $session->kraepelinResult?->delete();
+
+            // Hapus jawaban
+            $session->answers()->delete();
+            $session->kraepelinAnswers()->delete();
+
+            // Hapus sesi tes
+            $session->delete();
+        }
+
+        return back()->with('success', 'Data hasil tes yang dipilih berhasil dihapus.');
+    }
 }

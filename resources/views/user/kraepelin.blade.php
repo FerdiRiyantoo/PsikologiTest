@@ -54,30 +54,73 @@
         @csrf
         <input type="hidden" name="column_number" value="{{ $currentColumn }}">
 
-        <div class="digit-column">
-            @for($i = 0; $i < $config['rows_per_column']; $i++)
-            <div class="digit-pair" data-row="{{ $i }}">
-                <div class="digit-num">{{ $columnDigits[$i] }}</div>
-                <div class="digit-sep">+</div>
-                <div class="digit-num">{{ $columnDigits[$i + 1] }}</div>
-                <div class="digit-sep">=</div>
-                <input type="number"
-                       name="answers[{{ $i }}]"
-                       class="digit-input"
-                       min="0" max="9"
-                       maxlength="1"
-                       inputmode="numeric"
-                       autocomplete="off"
-                       data-correct="{{ ($columnDigits[$i] + $columnDigits[$i + 1]) % 10 }}"
-                       tabindex="{{ $i + 1 }}"
-                       id="input_{{ $i }}">
-                <div class="hint-text" id="hint_{{ $i }}"></div>
+        @php
+            $totalRows = $config['rows_per_column']; // 26
+            $halfRows  = (int) ceil($totalRows / 2); // 13 kiri, 13 kanan
+        @endphp
+
+        {{-- 
+            Render dalam 2 kolom visual, tapi urutan input (tabindex)
+            tetap berurutan 1-26 dari atas ke bawah (kiri dulu, lanjut kanan)
+        --}}
+        <div class="row g-2">
+
+            {{-- Kolom KIRI: soal 0 - (halfRows-1) --}}
+            <div class="col-6">
+                <div class="digit-column">
+                    @for($i = 0; $i < $halfRows; $i++)
+                    @php
+                        $correct = ($columnDigits[$i] + $columnDigits[$i + 1]) % 10;
+                    @endphp
+                    <div class="digit-pair" data-row="{{ $i }}">
+                        <div class="digit-num">{{ $columnDigits[$i] }}</div>
+                        <div class="digit-sep">+</div>
+                        <div class="digit-num">{{ $columnDigits[$i + 1] }}</div>
+                        <div class="digit-sep">=</div>
+                        <input type="number"
+                               name="answers[{{ $i }}]"
+                               class="digit-input"
+                               min="0" max="9"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-index="{{ $i }}"
+                               data-correct="{{ $correct }}"
+                               id="input_{{ $i }}">
+                    </div>
+                    @endfor
+                </div>
             </div>
-            @endfor
+
+            {{-- Kolom KANAN: soal halfRows - (totalRows-1) --}}
+            <div class="col-6">
+                <div class="digit-column">
+                    @for($i = $halfRows; $i < $totalRows; $i++)
+                    @php
+                        $correct = ($columnDigits[$i] + $columnDigits[$i + 1]) % 10;
+                    @endphp
+                    <div class="digit-pair" data-row="{{ $i }}">
+                        <div class="digit-num">{{ $columnDigits[$i] }}</div>
+                        <div class="digit-sep">+</div>
+                        <div class="digit-num">{{ $columnDigits[$i + 1] }}</div>
+                        <div class="digit-sep">=</div>
+                        <input type="number"
+                               name="answers[{{ $i }}]"
+                               class="digit-input"
+                               min="0" max="9"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               data-index="{{ $i }}"
+                               data-correct="{{ $correct }}"
+                               id="input_{{ $i }}">
+                    </div>
+                    @endfor
+                </div>
+            </div>
+
         </div>
 
         <button type="submit" id="submitBtn"
-                class="btn btn-primary w-100 py-2 mt-3 rounded-3 fw-semibold">
+                class="btn btn-primary w-100 py-2 mt-4 rounded-3 fw-semibold">
             <i class="bi bi-arrow-right-circle me-1"></i>
             @if($currentColumn < $config['total_columns'])
                 Lanjut ke Kolom {{ $currentColumn + 1 }}
@@ -92,52 +135,50 @@
 
 @push('scripts')
 <script>
-const totalTime   = {{ $config['time_per_column'] }};
-const totalCols   = {{ $config['total_columns'] }};
-const currentCol  = {{ $currentColumn }};
-let   timeLeft    = totalTime;
+const totalTime  = {{ $config['time_per_column'] }};
+const totalRows  = {{ $config['rows_per_column'] }};
+let   timeLeft   = totalTime;
 let   timerActive = true;
 
 const timerFill = document.getElementById('timerFill');
 const timerText = document.getElementById('timerText');
 const form      = document.getElementById('kraepelinForm');
-const inputs    = document.querySelectorAll('.digit-input');
 
-// Auto fokus ke input pertama
+// Ambil semua input diurutkan berdasarkan data-index (0, 1, 2, ... 25)
+// Ini memastikan navigasi keyboard berurutan meskipun input dibagi 2 kolom visual
+const inputs = Array.from(document.querySelectorAll('.digit-input'))
+    .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
+
+// Fokus ke input pertama
 inputs[0]?.focus();
 
-// Auto pindah ke input berikutnya saat input terisi
+// Navigasi dan input handler
 inputs.forEach((input, idx) => {
+
+    // Saat user mengetik
     input.addEventListener('input', function () {
-        // Hanya ambil 1 digit
+        // Ambil hanya 1 digit terakhir
         if (this.value.length > 1) {
             this.value = this.value.slice(-1);
         }
 
-        // Validasi hanya angka 0-9
         const val = parseInt(this.value);
         if (isNaN(val) || val < 0 || val > 9) {
             this.value = '';
             return;
         }
 
-        // Pindah ke input berikutnya
+        // Auto pindah ke input berikutnya
         if (idx < inputs.length - 1) {
             inputs[idx + 1].focus();
         }
     });
 
-    // Navigasi dengan keyboard arrow
+    // Navigasi keyboard
     input.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowDown' && idx < inputs.length - 1) {
-            inputs[idx + 1].focus();
-            e.preventDefault();
-        }
-        if (e.key === 'ArrowUp' && idx > 0) {
-            inputs[idx - 1].focus();
-            e.preventDefault();
-        }
-        if (e.key === 'Enter') {
+
+        // Enter / Arrow Down → input berikutnya
+        if ((e.key === 'Enter' || e.key === 'ArrowDown')) {
             e.preventDefault();
             if (idx < inputs.length - 1) {
                 inputs[idx + 1].focus();
@@ -145,10 +186,23 @@ inputs.forEach((input, idx) => {
                 form.submit();
             }
         }
-        // Backspace: jika kosong, kembali ke atas
+
+        // Arrow Up → input sebelumnya
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (idx > 0) inputs[idx - 1].focus();
+        }
+
+        // Backspace saat kosong → kembali ke atas
         if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+            e.preventDefault();
             inputs[idx - 1].focus();
         }
+    });
+
+    // Scroll ke input yang sedang aktif
+    input.addEventListener('focus', function () {
+        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 });
 
@@ -161,7 +215,7 @@ const timer = setInterval(() => {
     timerFill.style.width = pct + '%';
     timerText.textContent = timeLeft + 's';
 
-    // Ubah warna timer
+    // Warna timer
     timerFill.className = 'timer-fill';
     if (pct <= 20) {
         timerFill.classList.add('danger');
@@ -184,13 +238,6 @@ const timer = setInterval(() => {
 form.addEventListener('submit', () => {
     timerActive = false;
     clearInterval(timer);
-});
-
-// Scroll otomatis mengikuti input aktif
-inputs.forEach(input => {
-    input.addEventListener('focus', function () {
-        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
 });
 </script>
 @endpush

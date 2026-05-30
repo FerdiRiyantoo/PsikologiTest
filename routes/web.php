@@ -58,7 +58,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/results', [ResultController::class, 'index'])->name('results.index');
         Route::get('/results/{id}', [ResultController::class, 'show'])->name('results.show');
         Route::get('/results/{id}/pdf', [ResultController::class, 'exportPdf'])->name('results.pdf');
-
+        Route::post('/results/bulk-action', [ResultController::class, 'bulk'])->name('results.bulk');
+        Route::delete('/results/{id}', [ResultController::class, 'destroy'])->name('results.destroy');
         // ganti password admin
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');

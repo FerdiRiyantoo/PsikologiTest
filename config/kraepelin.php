@@ -2,6 +2,6 @@
 
 return [
     'total_columns'   => 50,
-    'rows_per_column' => 26, // 27 angka = 26 pasang yang dijumlahkan
+    'rows_per_column' => 27, 
     'time_per_column' => 15,
 ];

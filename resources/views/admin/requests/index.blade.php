@@ -60,7 +60,7 @@
                                 </div>
                             </th>
                             <th class="text-muted small fw-bold text-uppercase">Kandidat</th>
-                            <th class="text-muted small fw-bold text-uppercase">Posisi & Pendidikan</th>
+                            <th class="text-muted small fw-bold text-uppercase">Posisi yang dilamar & Pendidikan</th>
                             <th class="text-muted small fw-bold text-uppercase">Jenis Tes</th> {{-- TAMBAHAN KOLOM HEADER --}}
                             <th class="text-muted small fw-bold text-uppercase">Status</th>
                             <th class="text-muted small fw-bold text-uppercase">Kode Akses</th>
@@ -87,8 +87,8 @@
                                 </div>
                             </td>
                             <td>
-                                <div class="fw-medium text-dark" style="font-size: 13px;">{{ $r->posisi_jabatan_terakhir ?? '-' }}</div>
-                                <div class="text-muted" style="font-size: 11px;"><i class="bi bi-mortarboard me-1"></i>{{ $r->pendidikan_terakhir ?? '-' }}</div>
+                                <div class="fw-medium text-dark" style="font-size: 13px;">{{ $r->posisi_yang_dilamar ?? '-' }}</div>
+                                <div class="text-muted" style="font-size: 11px;"><i class="bi bi-mortarboard me-1"></i>{{ $r->pendidikan_terakhir ?? '-' }} - {{ $r->jurusan ?? '-' }}</div>
                             </td>
                             {{-- TAMBAHAN DATA JENIS TES --}}
                             <td>
