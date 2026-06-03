@@ -25,36 +25,15 @@
 
     {{-- Timer --}}
     <div class="mb-3">
-
-        {{-- Timer Total --}}
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <small class="text-muted fw-semibold">
-                <i class="bi bi-hourglass-split me-1"></i>Sisa Waktu Total
-            </small>
-            <span class="fw-bold" id="totalTimerText"
-                style="font-size:15px; color:#1d4ed8; font-family:monospace">
-                {{ gmdate('i:s', $timeLeft) }}
-            </span>
-        </div>
-        <div class="progress mb-3" style="height:5px; border-radius:4px; background:#dbeafe">
-            <div class="progress-bar"
-                id="totalTimerBar"
-                style="width:{{ ($timeLeft / $config['total_time']) * 100 }}%;
-                        background:#2563eb; transition:width 1s linear">
-            </div>
-        </div>
-
-        {{-- Timer Kolom --}}
         <div class="d-flex justify-content-between mb-1">
             <small class="text-muted">
-                <i class="bi bi-stopwatch me-1"></i>Waktu Kolom {{ $currentColumn }}
+                <i class="bi bi-stopwatch me-1"></i>Waktu tersisa
             </small>
             <small class="fw-bold" id="timerText">{{ $config['time_per_column'] }}s</small>
         </div>
         <div class="timer-bar">
             <div class="timer-fill" id="timerFill" style="width:100%"></div>
         </div>
-
     </div>
 
     {{-- Header kolom --}}
@@ -152,110 +131,119 @@
 
 @push('scripts')
 <script>
-const colTime     = {{ $config['time_per_column'] }};
-const totalConfig = {{ $config['total_time'] }};
-const form        = document.getElementById('kraepelinForm');
+const totalTime   = {{ $config['time_per_column'] }};
+const totalRows   = {{ $config['rows_per_column'] }};
+let   timeLeft    = totalTime;
+let   timerActive = true;
 
-// Timer kolom
-let colTimeLeft  = colTime;
-const timerFill  = document.getElementById('timerFill');
-const timerText  = document.getElementById('timerText');
+const timerFill = document.getElementById('timerFill');
+const timerText = document.getElementById('timerText');
+const form      = document.getElementById('kraepelinForm');
 
-// Timer total
-let totalTimeLeft    = {{ $timeLeft }};
-const totalBar       = document.getElementById('totalTimerBar');
-const totalTimerText = document.getElementById('totalTimerText');
+// Ambil semua input diurutkan berdasarkan data-index (0, 1, 2, ... 25)
+const inputs = Array.from(document.querySelectorAll('.digit-input'))
+    .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
 
-function formatTime(seconds) {
-    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-    const s = String(seconds % 60).padStart(2, '0');
-    return `${m}:${s}`;
+// Fungsi untuk mencari input kosong paling awal
+function getFirstEmptyInput() {
+    return inputs.find(input => input.value.trim() === '');
 }
 
-// Jalankan kedua timer bersamaan
-const timer = setInterval(() => {
+// Fokus ke input pertama saat halaman dimuat
+inputs[0]?.focus();
 
-    // ===== Timer Kolom =====
-    colTimeLeft--;
-    const colPct = (colTimeLeft / colTime) * 100;
-    timerFill.style.width = colPct + '%';
-    timerText.textContent = colTimeLeft + 's';
+// Navigasi dan input handler
+inputs.forEach((input, idx) => {
+
+    // Deteksi input nilai
+    input.addEventListener('input', function () {
+        if (this.value.length > 1) {
+            this.value = this.value.slice(-1);
+        }
+
+        const val = parseInt(this.value);
+        if (isNaN(val) || val < 0 || val > 9) {
+            this.value = '';
+            return;
+        }
+
+        // Auto pindah ke soal kosong berikutnya setelah mengisi
+        const nextEmpty = getFirstEmptyInput();
+        if (nextEmpty) {
+            nextEmpty.focus();
+        } else {
+            form.submit();
+        }
+    });
+
+    // Navigasi keyboard
+    input.addEventListener('keydown', function (e) {
+        // Mencegah navigasi panah bawah / enter melompati soal kosong
+        if (e.key === 'Enter' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextEmpty = getFirstEmptyInput();
+            if (nextEmpty) {
+                nextEmpty.focus();
+            } else {
+                form.submit();
+            }
+        }
+
+        // Arrow Up → Hanya boleh kembali ke atas jika tidak melompati baris terisi
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (idx > 0) inputs[idx - 1].focus();
+        }
+
+        // Backspace saat kosong → kembali ke atas
+        if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+            e.preventDefault();
+            inputs[idx - 1].focus();
+        }
+    });
+
+    // Proteksi Klik & Fokus Sembarangan
+    input.addEventListener('focus', function () {
+        const firstEmpty = getFirstEmptyInput();
+        
+        // Jika user memfokuskan elemen yang lebih maju daripada target yang kosong, paksa balikkan fokusnya
+        if (firstEmpty && idx > inputs.indexOf(firstEmpty)) {
+            firstEmpty.focus();
+        } else {
+            this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+});
+
+// Timer countdown
+const timer = setInterval(() => {
+    if (!timerActive) return;
+    timeLeft--;
+
+    const pct = (timeLeft / totalTime) * 100;
+    timerFill.style.width = pct + '%';
+    timerText.textContent = timeLeft + 's';
 
     timerFill.className = 'timer-fill';
-    if (colPct <= 20) {
+    if (pct <= 20) {
         timerFill.classList.add('danger');
         timerText.style.color = '#ef4444';
-    } else if (colPct <= 40) {
+    } else if (pct <= 40) {
         timerFill.classList.add('warning');
         timerText.style.color = '#f59e0b';
     }
 
-    // ===== Timer Total =====
-    totalTimeLeft--;
-    const totalPct = (totalTimeLeft / totalConfig) * 100;
-    totalBar.style.width  = Math.max(0, totalPct) + '%';
-    totalTimerText.textContent = formatTime(Math.max(0, totalTimeLeft));
-
-    // Warna total timer saat menipis
-    if (totalPct <= 10) {
-        totalTimerText.style.color = '#ef4444';
-        totalBar.style.background  = '#ef4444';
-    } else if (totalPct <= 25) {
-        totalTimerText.style.color = '#f59e0b';
-        totalBar.style.background  = '#f59e0b';
-    }
-
-    // Timer kolom habis → pindah kolom
-    if (colTimeLeft <= 0) {
+    if (timeLeft <= 0) {
         clearInterval(timer);
-        timerText.textContent = 'Waktu kolom habis!';
-        form.submit();
-        return;
-    }
-
-    // Timer total habis → paksa selesai
-    if (totalTimeLeft <= 0) {
-        clearInterval(timer);
-        totalTimerText.textContent = '00:00';
+        timerActive = false;
         timerText.textContent = 'Waktu habis!';
         form.submit();
     }
-
 }, 1000);
 
-// Hentikan timer saat submit manual
-form.addEventListener('submit', () => clearInterval(timer));
-
-// Input handlers
-const inputs = Array.from(document.querySelectorAll('.digit-input'))
-    .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
-
-inputs[0]?.focus();
-
-inputs.forEach((input, idx) => {
-    input.addEventListener('input', function () {
-        if (this.value.length > 1) this.value = this.value.slice(-1);
-        const val = parseInt(this.value);
-        if (isNaN(val) || val < 0 || val > 9) { this.value = ''; return; }
-        if (idx < inputs.length - 1) inputs[idx + 1].focus();
-    });
-
-    input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            idx < inputs.length - 1 ? inputs[idx + 1].focus() : form.submit();
-        }
-        if (e.key === 'ArrowUp' && idx > 0) {
-            e.preventDefault(); inputs[idx - 1].focus();
-        }
-        if (e.key === 'Backspace' && this.value === '' && idx > 0) {
-            e.preventDefault(); inputs[idx - 1].focus();
-        }
-    });
-
-    input.addEventListener('focus', function () {
-        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
+form.addEventListener('submit', () => {
+    timerActive = false;
+    clearInterval(timer);
 });
 </script>
 @endpush

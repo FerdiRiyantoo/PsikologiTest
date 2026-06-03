@@ -59,12 +59,28 @@
         .score-card:last-child { border-right:none; }
         .score-num {
             font-size:22px; font-weight:900;
-            color:#6d28d9; line-height:1;
-            margin-bottom:4px;
+            line-height:1; margin-bottom:4px;
         }
         .score-unit  { font-size:9px; color:#9ca3af; }
         .score-label { font-size:10px; font-weight:bold; color:#374151; margin:4px 0 2px; }
         .score-desc  { font-size:9px; color:#9ca3af; }
+
+        /* Label Kategori & Warna */
+        .badge {
+            display: inline-block; padding: 4px 6px; font-size: 8px;
+            font-weight: bold; border-radius: 3px; color: white; margin-top: 6px;
+        }
+        .bg-success { background: #15803d; }
+        .bg-primary { background: #1d4ed8; }
+        .bg-warning { background: #b45309; }
+        .bg-danger  { background: #b91c1c; }
+        .bg-dark    { background: #374151; }
+
+        .text-success { color: #15803d; }
+        .text-primary { color: #1d4ed8; }
+        .text-warning { color: #b45309; }
+        .text-danger  { color: #b91c1c; }
+        .text-dark    { color: #374151; }
 
         /* ===== RINGKASAN ===== */
         .summary-section { margin:0 24px 16px; }
@@ -131,13 +147,6 @@
         .acc-high { color:#15803d; font-weight:bold; }
         .acc-mid  { color:#d97706; font-weight:bold; }
         .acc-low  { color:#dc2626; font-weight:bold; }
-
-        /* ===== MINI BAR DI TABEL ===== */
-        .mini-bar-bg {
-            background:#e5e7eb; height:7px;
-            border-radius:2px; width:100%;
-        }
-        .mini-bar-fill { height:7px; border-radius:2px; }
 
         /* ===== FOOTER ===== */
         .footer {
@@ -207,34 +216,80 @@
 
 @if($result)
 
+{{-- LOGIKA PENENTU KATEGORI NORMA --}}
+@php
+    // 1. PANKER (Kecepatan)
+    $pankerScore = $result->pace_score;
+    if ($pankerScore >= 16.044)      { $pankerStatus = 'Baik Sekali'; $pankerClass = 'success'; $pankerHex = '#15803d'; }
+    elseif ($pankerScore >= 13.362)  { $pankerStatus = 'Baik';        $pankerClass = 'primary'; $pankerHex = '#1d4ed8'; }
+    elseif ($pankerScore >= 10.963)  { $pankerStatus = 'Sedang';      $pankerClass = 'warning'; $pankerHex = '#b45309'; }
+    elseif ($pankerScore >= 8.116)   { $pankerStatus = 'Kurang';      $pankerClass = 'danger';  $pankerHex = '#b91c1c'; }
+    else                             { $pankerStatus = 'Kurang Sekali'; $pankerClass = 'dark';  $pankerHex = '#374151'; }
+
+    // 2. TIANKER (Ketelitian)
+    $tiankerScore = $result->total_errors ?? ($result->total_answered - $result->total_correct);
+    if ($tiankerScore == 0)          { $tiankerStatus = 'Baik Sekali'; $tiankerClass = 'success'; $tiankerHex = '#15803d'; }
+    elseif ($tiankerScore <= 2)      { $tiankerStatus = 'Baik';        $tiankerClass = 'primary'; $tiankerHex = '#1d4ed8'; }
+    elseif ($tiankerScore <= 14)     { $tiankerStatus = 'Sedang';      $tiankerClass = 'warning'; $tiankerHex = '#b45309'; }
+    elseif ($tiankerScore <= 21)     { $tiankerStatus = 'Kurang';      $tiankerClass = 'danger';  $tiankerHex = '#b91c1c'; }
+    else                             { $tiankerStatus = 'Kurang Sekali'; $tiankerClass = 'dark';  $tiankerHex = '#374151'; }
+
+    // 3. HANKER (Ketahanan)
+    $hankerScore = $result->endurance_score;
+    if ($hankerScore >= 2.497)       { $hankerStatus = 'Baik Sekali'; $hankerClass = 'success'; $hankerHex = '#15803d'; }
+    elseif ($hankerScore >= 1.015)   { $hankerStatus = 'Baik';        $hankerClass = 'primary'; $hankerHex = '#1d4ed8'; }
+    elseif ($hankerScore >= -0.468)  { $hankerStatus = 'Sedang';      $hankerClass = 'warning'; $hankerHex = '#b45309'; }
+    elseif ($hankerScore >= -1.195)  { $hankerStatus = 'Kurang';      $hankerClass = 'danger';  $hankerHex = '#b91c1c'; }
+    else                             { $hankerStatus = 'Kurang Sekali'; $hankerClass = 'dark';  $hankerHex = '#374151'; }
+
+    // 4. JANKER (Keajegan)
+    $jankerScore = $result->stability_score;
+    if ($jankerScore <= 3)           { $jankerStatus = 'Baik Sekali'; $jankerClass = 'success'; $jankerHex = '#15803d'; }
+    elseif ($jankerScore <= 7)       { $jankerStatus = 'Baik';        $jankerClass = 'primary'; $jankerHex = '#1d4ed8'; }
+    elseif ($jankerScore <= 10)      { $jankerStatus = 'Sedang';      $jankerClass = 'warning'; $jankerHex = '#b45309'; }
+    elseif ($jankerScore <= 14)      { $jankerStatus = 'Kurang';      $jankerClass = 'danger';  $jankerHex = '#b91c1c'; }
+    else                             { $jankerStatus = 'Kurang Sekali'; $jankerClass = 'dark';  $jankerHex = '#374151'; }
+@endphp
+
 {{-- ===== 4 SKOR UTAMA ===== --}}
 <div class="scores-section">
     <div class="scores-title">Skor Utama Tes Kraepelin</div>
     <table class="scores-grid">
         <tr>
-            <td class="score-card">
-                <div class="score-num">{{ number_format($result->pace_score, 1) }}</div>
-                <div class="score-unit">soal/kolom</div>
-                <div class="score-label">Kecepatan (Pace)</div>
-                <div class="score-desc">Rata-rata soal dijawab per kolom</div>
+            {{-- PANKER --}}
+            <td class="score-card" style="border-bottom: 3px solid {{ $pankerHex }}">
+                <div class="score-num text-{{ $pankerClass }}">{{ number_format($pankerScore, 1) }}</div>
+                <div class="score-unit">soal / kolom</div>
+                <div class="score-label">PANKER</div>
+                <div class="score-desc">(Kecepatan Kerja)</div>
+                <div class="badge bg-{{ $pankerClass }}">{{ $pankerStatus }}</div>
             </td>
-            <td class="score-card">
-                <div class="score-num">{{ number_format($result->accuracy_score, 1) }}<span style="font-size:14px">%</span></div>
-                <div class="score-unit">dari yang dijawab</div>
-                <div class="score-label">Ketelitian (Accuracy)</div>
-                <div class="score-desc">Persentase jawaban benar</div>
+            
+            {{-- TIANKER --}}
+            <td class="score-card" style="border-bottom: 3px solid {{ $tiankerHex }}">
+                <div class="score-num text-{{ $tiankerClass }}">{{ $tiankerScore }}</div>
+                <div class="score-unit">error & skip</div>
+                <div class="score-label">TIANKER</div>
+                <div class="score-desc">(Ketelitian Kerja)</div>
+                <div class="badge bg-{{ $tiankerClass }}">{{ $tiankerStatus }}</div>
             </td>
-            <td class="score-card">
-                <div class="score-num">{{ number_format($result->endurance_score, 1) }}<span style="font-size:14px">%</span></div>
-                <div class="score-unit">konsistensi</div>
-                <div class="score-label">Ketahanan (Endurance)</div>
-                <div class="score-desc">Konsistensi awal vs akhir</div>
+            
+            {{-- HANKER --}}
+            <td class="score-card" style="border-bottom: 3px solid {{ $hankerHex }}">
+                <div class="score-num text-{{ $hankerClass }}">{{ number_format($hankerScore, 2) }}</div>
+                <div class="score-unit">stabilitas energi</div>
+                <div class="score-label">HANKER</div>
+                <div class="score-desc">(Ketahanan Kerja)</div>
+                <div class="badge bg-{{ $hankerClass }}">{{ $hankerStatus }}</div>
             </td>
-            <td class="score-card">
-                <div class="score-num">{{ number_format($result->stability_score, 1) }}<span style="font-size:14px">%</span></div>
-                <div class="score-unit">kestabilan</div>
-                <div class="score-label">Keajegan (Stability)</div>
-                <div class="score-desc">Kestabilan antar kolom</div>
+            
+            {{-- JANKER --}}
+            <td class="score-card" style="border-bottom: 3px solid {{ $jankerHex }}">
+                <div class="score-num text-{{ $jankerClass }}">{{ number_format($jankerScore, 2) }}</div>
+                <div class="score-unit">fluktuasi deviasi</div>
+                <div class="score-label">JANKER</div>
+                <div class="score-desc">(Keajegan Kerja)</div>
+                <div class="badge bg-{{ $jankerClass }}">{{ $jankerStatus }}</div>
             </td>
         </tr>
     </table>
