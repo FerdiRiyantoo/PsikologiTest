@@ -3,12 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User\AccessRequestController;
 use App\Http\Controllers\User\TestController;
+use App\Http\Controllers\User\KraepelinController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\Admin\ResultController;
 use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\User\KraepelinController;
+
+// KUNCI: Import Model dan Service untuk Recalc agar tidak error class not found
+use App\Models\TestSession;
+use App\Services\KraepelinScoringService;
 
 // ==================== PENGGUNA (Publik) ====================
 Route::get('/', [AccessRequestController::class, 'landing'])->name('home');
@@ -34,6 +38,11 @@ Route::middleware('test.session')->group(function () {
 });
 Route::get('/test/finish', [TestController::class, 'finish'])->name('test.finish');
 Route::get('/kraepelin/finish', [KraepelinController::class, 'finish'])->name('kraepelin.finish');
+
+// Magic link — akses langsung dari email (di luar middleware test.session)
+Route::get('/magic/{token}', [AccessRequestController::class, 'magicLogin'])->name('magic.login');
+
+
 // ==================== ADMIN ====================
 Route::prefix('admin')->name('admin.')->group(function () {
 
@@ -41,7 +50,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    
 
     // Panel Admin (dilindungi auth)
     Route::middleware('auth')->group(function () {
@@ -60,12 +68,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/results/{id}/pdf', [ResultController::class, 'exportPdf'])->name('results.pdf');
         Route::post('/results/bulk-action', [ResultController::class, 'bulk'])->name('results.bulk');
         Route::delete('/results/{id}', [ResultController::class, 'destroy'])->name('results.destroy');
-        // ganti password admin
+        
+        // POSISI BARU: Recalculate Kraepelin (Aman di dalam auth admin)
+        // Ganti baris ini di dalam middleware auth admin
+        Route::get('/results/{id}/recalc', [ResultController::class, 'recalculate'])->name('results.recalc');
+
+        // Ganti password admin
         Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
         Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     });
 });
-
-// Magic link — akses langsung dari email (di luar middleware test.session)
-    Route::get('/magic/{token}', [AccessRequestController::class, 'magicLogin'])
-        ->name('magic.login');

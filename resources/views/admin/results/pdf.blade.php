@@ -96,9 +96,9 @@
         }
 
         /* Warna skor — biru gradasi (solid untuk DomPDF) */
-        .score-high { color: #1e3a8a; } /* biru sangat gelap */
-        .score-mid  { color: #1d4ed8; } /* biru sedang */
-        .score-low  { color: #60a5fa; } /* biru muda */
+        .score-high { color: #1e3a8a; } 
+        .score-mid  { color: #1d4ed8; } 
+        .score-low  { color: #60a5fa; } 
 
         /* ===== GRAFIK ===== */
         .chart-section { margin: 0 24px 14px; }
@@ -175,9 +175,7 @@
                 <div class="info-value">
                     @if($session->started_at && $session->completed_at)
                         @php
-                            // Menghitung selisih dalam detik
                             $totalSeconds = $session->started_at->diffInSeconds($session->completed_at);
-                            // Mengonversi ke menit desimal (1 angka di belakang koma)
                             $decimalDuration = number_format($totalSeconds / 60, 1);
                         @endphp
                         {{ $decimalDuration }} <span class="small text-muted">Menit</span>
@@ -190,53 +188,30 @@
     </table>
 </div>
 
-@if($session->papiResult)
+{{-- Memastikan relasi hasil tes 'result' terisi --}}
+@if($session->result)
 @php
-$scales = $session->papiResult->getScalesArray();
-$categories = [
-    'Leadership' => [
-        'C' => ['label' => 'Leadership Role',          'desc' => 'Peran Pemimpin'],
-        'P' => ['label' => 'Need to Control Others',   'desc' => 'Kebutuhan Mengatur Orang Lain'],
-        'I' => ['label' => 'Ease in Decision Making',  'desc' => 'Kemudahan Membuat Keputusan'],
-    ],
-    'Followership' => [
-        'F' => ['label' => 'Need to Support Authority',       'desc' => 'Kebutuhan Membantu Atasan'],
-        'W' => ['label' => 'Need for Rules and Supervision',  'desc' => 'Kebutuhan Aturan & Pengawasan'],
-    ],
-    'Activity' => [
-        'T' => ['label' => 'Pace (Work)',     'desc' => 'Kesiapan & Mental Bekerja'],
-        'V' => ['label' => 'Vigorous Type',   'desc' => 'Peran Penuh Semangat – Fisik'],
-    ],
-    'Work Style' => [
-        'R' => ['label' => 'Theoretical Type',                  'desc' => 'Peran Orang yang Teoritis'],
-        'D' => ['label' => 'Interest in Working With Details',  'desc' => 'Bekerja dengan Hal Rinci'],
-        'C' => ['label' => 'Organized Type',                    'desc' => 'Peran Mengatur'],
-    ],
-    'Social Nature' => [
-        'X' => ['label' => 'Need to be Noticed',          'desc' => 'Kebutuhan Diperhatikan'],
-        'B' => ['label' => 'Need to Belong to Groups',    'desc' => 'Diterima dalam Kelompok'],
-        'O' => ['label' => 'Need for Closeness',          'desc' => 'Kedekatan & Kasih Sayang'],
-        'S' => ['label' => 'Social Extension',            'desc' => 'Peran Hubungan Sosial'],
-    ],
-    'Work Direction' => [
-        'N' => ['label' => 'Need to Finish Task',          'desc' => 'Menyelesaikan Tugas Mandiri'],
-        'G' => ['label' => 'Role of Hard Intense Worker',  'desc' => 'Pekerja Keras'],
-        'A' => ['label' => 'Need for Achievement',         'desc' => 'Kebutuhan Berprestasi'],
-        'L' => ['label' => 'Need for Change',              'desc' => 'Kebutuhan untuk Berubah'],
-    ],
-    'Temperament' => [
-        'E' => ['label' => 'Emotional Resistant',  'desc' => 'Pengendalian Emosi'],
-        'K' => ['label' => 'Need to be Forceful',  'desc' => 'Kebutuhan untuk Agresif'],
-        'Z' => ['label' => 'Need for Change',      'desc' => 'Kebutuhan untuk Berubah'],
-    ],
+// Mengambil interpretasi array dinamis dari model result
+$categories = $session->result->getCategorizedScales();
+
+// Fallback manual 20 skala jika Anda membutuhkan mapping data grafik batang internal DomPDF
+$scalesMap = [
+    'N' => $session->result->scale_n, 'G' => $session->result->scale_g,
+    'A' => $session->result->scale_a, 'L' => $session->result->scale_l,
+    'P' => $session->result->scale_p, 'I' => $session->result->scale_i,
+    'T' => $session->result->scale_t, 'V' => $session->result->scale_v,
+    'X' => $session->result->scale_x, 'S' => $session->result->scale_s,
+    'B' => $session->result->scale_b, 'O' => $session->result->scale_o,
+    'R' => $session->result->scale_r, 'D' => $session->result->scale_d,
+    'C' => $session->result->scale_c, 'Z' => $session->result->scale_z,
+    'E' => $session->result->scale_e, 'K' => $session->result->scale_k,
+    'F' => $session->result->scale_f, 'W' => $session->result->scale_w,
 ];
 
-// Fungsi warna solid untuk DomPDF (tidak support gradient)
-// Tingkatan biru: rendah=muda, sedang=normal, tinggi=gelap
 $getBarColor = function(int $score): string {
-    if ($score >= 7) return '#1e3a8a'; // biru sangat gelap
-    if ($score >= 4) return '#2563eb'; // biru sedang
-    return '#93c5fd';                  // biru muda
+    if ($score >= 7) return '#1e3a8a'; 
+    if ($score >= 4) return '#2563eb'; 
+    return '#93c5fd';                  
 };
 
 $getScoreClass = function(int $score): string {
@@ -251,13 +226,13 @@ $getScoreClass = function(int $score): string {
     <div class="chart-title">Grafik Skor 20 Skala PAPI-Kostick</div>
     <div class="chart-box">
         <table style="width:100%; border-collapse:collapse;">
-            @php $scaleKeys = array_keys($scales); @endphp
+            @php $scaleKeys = array_keys($scalesMap); @endphp
             @for($i = 0; $i < count($scaleKeys); $i += 2)
             <tr>
                 @for($j = $i; $j < min($i + 2, count($scaleKeys)); $j++)
                 @php
                     $key      = $scaleKeys[$j];
-                    $score    = $scales[$key];
+                    $score    = $scalesMap[$key];
                     $pct      = round(($score / 9) * 100);
                     $barColor = $getBarColor($score);
                 @endphp
@@ -286,43 +261,50 @@ $getScoreClass = function(int $score): string {
 </div>
 
 {{-- ===== TABEL SKOR PER KATEGORI ===== --}}
-@foreach($categories as $catName => $catScales)
+{{-- ===== TABEL SKOR PER KATEGORI ===== --}}
+@foreach($categories as $catName => $scalesData)
 <div class="section">
     <div class="section-title">{{ $catName }}</div>
     <table class="score-table">
         <thead>
             <tr>
-                <th style="width:28px;">Skala</th>
-                <th style="width:130px;">Parameter</th>
-                <th style="width:100px;">Deskripsi</th>
-                <th style="width:36px; text-align:center;">Skor</th>
-                <th style="width:120px;">Bar</th>
+                <th style="width:35px; text-align:center;">Skala</th>
+                <th style="width:140px;">Parameter</th>
+                <th style="width:35px; text-align:center;">Skor</th>
+                <th>Interpretasi Deskripsi</th>
+                <th style="width:110px;">Bar</th>
             </tr>
         </thead>
         <tbody>
-        @foreach($catScales as $scaleKey => $info)
+        @foreach($scalesData as $key => $data)
         @php
-            $scoreKey  = 'scale_' . strtolower($scaleKey);
-            $scoreVal  = $session->papiResult->$scoreKey ?? 0;
-            $barWidth  = round(($scoreVal / 9) * 100);
-            $barColor  = $getBarColor($scoreVal);
+            $scaleKey   = strlen($key) > 1 ? substr($key, 0, 1) : $key;
+            $scoreVal   = $data['score'];
+            $barWidth   = round(($scoreVal / 9) * 100);
+            $barColor   = $getBarColor($scoreVal);
             $scoreClass = $getScoreClass($scoreVal);
+            
+            // Mengambil interpretasi text langsung menggunakan helper interpretasi model
+            $interpretation = $session->result->getScoreInterpretation($scaleKey, $scoreVal);
         @endphp
         <tr>
             <td class="scale-letter">{{ $scaleKey }}</td>
-            <td>{{ $info['label'] }}</td>
-            <td style="color:#6b7280; font-size:9px;">{{ $info['desc'] }}</td>
-            <td class="score-num {{ $scoreClass }}">{{ $scoreVal }}</td>
             <td>
-                {{-- DomPDF: gunakan table untuk bar agar lebar bisa dikontrol --}}
-                <table style="width:100%; border-collapse:collapse;">
+                <div style="font-weight: bold;">{{ $data['label'] }}</div>
+                <div style="color:#6b7280; font-size:8.5px; line-height: 1.1;">{{ $data['desc'] }}</div>
+            </td>
+            <td class="score-num {{ $scoreClass }}">{{ $scoreVal }}</td>
+            <td style="color:#374151; font-size:9px; line-height:1.3;">{{ $interpretation }}</td>
+            {{-- Bagian Kolom Bar: Diberikan border none agar tidak ada garis kotak luar --}}
+            <td style="border:1px solid #dde3ef; padding: 5px 8px;">
+                <table style="width:100%; border-collapse:collapse; border:none !important; background:transparent;">
                     <tr>
-                        <td style="padding:0;">
+                        <td style="padding:0; border:none !important; background:transparent !important;">
                             <div style="background:#dbeafe; height:8px; border-radius:2px; width:100%;">
                                 <div style="background:{{ $barColor }}; height:8px; border-radius:2px; width:{{ $barWidth }}%;"></div>
                             </div>
                         </td>
-                        <td style="width:24px; font-size:9px; color:#9ca3af; padding-left:4px; white-space:nowrap;">
+                        <td style="width:24px; font-size:9px; color:#9ca3af; padding-left:4px; white-space:nowrap; text-align: right; border:none !important; background:transparent !important;">
                             {{ $scoreVal }}/9
                         </td>
                     </tr>
@@ -336,15 +318,16 @@ $getScoreClass = function(int $score): string {
 @endforeach
 
 @else
-<div style="margin:24px; padding:12px; background:#fef9c3; border:1px solid #fde047; border-radius:4px; color:#854d0e;">
-    Hasil tes belum tersedia.
+<div style="margin:24px; padding:16px; background:#fef9c3; border:1px solid #fde047; border-radius:4px; color:#854d0e; text-align:center;">
+    <strong>Hasil Belum Tersedia</strong><br>
+    <span style="font-size: 10px;">Peserta belum menyelesaikan seluruh lembar pengerjaan soal ujian PAPI-Kostick.</span>
 </div>
 @endif
 
 {{-- ===== FOOTER ===== --}}
 <div class="footer">
-    <span class="footer-left">Dokumen inidigenerate secara otomatis oleh Sistem Psikotes PAPI-Kostick &nbsp;·&nbsp; Digitama Consulting</span>
-    <span class="footer-right">{{ $session->accessRequest->name }} &nbsp;·&nbsp; {{ now()->format('d/m/Y H:i') }}</span>
+    <span class="footer-left">Dokumen ini digenerate secara otomatis oleh Sistem Psikotes PAPI-Kostick &nbsp;·&nbsp; Digitama Consulting</span>
+    <span class="footer-right">{{ $session->accessRequest->name }} &nbsp;·&nbsp; {{ now()->format('d/m/Y H:i') }} WIB</span>
 </div>
 
 </body>

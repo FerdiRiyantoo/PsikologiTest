@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TestSession;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use App\Services\KraepelinScoringService;
 
 class ResultController extends Controller
 {
@@ -141,5 +142,17 @@ class ResultController extends Controller
         }
 
         return back()->with('success', 'Data hasil tes yang dipilih berhasil dihapus.');
+    }
+
+    public function recalculate($id)
+    {
+        $session = TestSession::findOrFail($id);
+
+        // Panggil service kalkulasi baru secara paksa
+        $scoring = new KraepelinScoringService($session);
+        $scoring->calculate();
+
+        return redirect()->route('admin.results.show', $id)
+                        ->with('success', 'Kalkulasi ulang berhasil menggunakan rumus baru.');
     }
 }

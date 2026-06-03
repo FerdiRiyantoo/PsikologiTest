@@ -189,10 +189,11 @@
             </div>
 
             <div class="d-flex justify-content-center flex-wrap gap-3 mt-5">
-                <a href="{{ route('home') }}" class="btn btn-light px-4 py-2 border rounded-pill text-decoration-none shadow-sm fw-semibold" style="color: #475569;">
+                <a href="{{ route('home') }}" class="btn btn-light px-4 py-2 border rounded-pill text-decoration-none shadow-sm fw-semibold d-inline-flex align-items-center justify-content-center" style="color: #475569;">
                     <i class="fas fa-arrow-left me-2"></i> Batalkan
                 </a>
-                <button type="submit" class="btn-submit-modern px-5 rounded-pill shadow-sm" id="btnSubmit">
+                
+                <button type="submit" class="btn-submit-modern px-5 py-2 rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" id="btnSubmit">
                     <span>Daftar Sekarang</span> <i class="fas fa-paper-plane ms-2"></i>
                 </button>
             </div>

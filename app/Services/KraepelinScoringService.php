@@ -17,89 +17,104 @@ class KraepelinScoringService
 
     public function calculate(): void
     {
-        // 1. Ambil seluruh jawaban dari sesi ini
         $answers = KraepelinAnswer::where('test_session_id', $this->testSession->id)->get();
 
         if ($answers->isEmpty()) {
             return;
         }
 
-        // 2. Kelompokkan per kolom
+        // ========================================================
+        // 1. INISIALISASI MUTLAK 50 KOLOM (Sesuai Standar Excel)
+        // ========================================================
+        $totalConfigColumns = config('kraepelin.total_columns', 50);
         $perColumn = [];
+        $errorPerColumn = []; 
 
+        // Membangun struktur cetakan 50 kolom kosong (Default bernilai 0)
+        for ($i = 1; $i <= $totalConfigColumns; $i++) {
+            $perColumn[$i] = [
+                'answered' => 0,
+                'correct'  => 0,
+            ];
+            $errorPerColumn[$i] = 0;
+        }
+
+        // 2. Petakan data jawaban riil dari database ke cetakan 50 kolom
         foreach ($answers as $answer) {
             $col = $answer->column_number;
 
-            if (!isset($perColumn[$col])) {
-                $perColumn[$col] = [
-                    'answered' => 0,
-                    'correct'  => 0,
-                ];
-            }
+            // Jika ada kolom di luar batas konfigurasi (misal kolom 51), abaikan
+            if (!isset($perColumn[$col])) continue;
 
-            // Hanya hitung jika user benar-benar mengisi jawaban
             if (!is_null($answer->user_answer)) {
                 $perColumn[$col]['answered']++;
-
-                // Jawaban benar TIDAK BOLEH melebihi yang dijawab
                 if ($answer->is_correct) {
                     $perColumn[$col]['correct']++;
+                } else {
+                    $errorPerColumn[$col]++;
                 }
+            } else {
+                $errorPerColumn[$col]++;
             }
         }
 
-        // Urutkan berdasarkan nomor kolom
-        ksort($perColumn);
-
-        // 3. Validasi: pastikan correct <= answered di setiap kolom
+        // 3. Validasi & Hitung Persentase Akurasi per Kolom
         foreach ($perColumn as $col => &$data) {
-            // Sanitasi: correct tidak boleh lebih dari answered
             $data['correct'] = min($data['correct'], $data['answered']);
-
-            // Hitung akurasi per kolom
             $data['accuracy_pct'] = $data['answered'] > 0
                 ? round(($data['correct'] / $data['answered']) * 100, 1)
                 : 0;
         }
-        unset($data); // putus referensi
+        unset($data);
 
-        // 4. Hitung total keseluruhan
+        // 4. Hitung Total Akumulasi Keseluruhan
         $totalAnswered = array_sum(array_column($perColumn, 'answered'));
         $totalCorrect  = array_sum(array_column($perColumn, 'correct'));
+        $totalCorrect  = min($totalCorrect, $totalAnswered); 
 
-        // Sanitasi global: total correct tidak boleh > total answered
-        $totalCorrect = min($totalCorrect, $totalAnswered);
+        // KUNCI UTAMA: Ambil nilai 'correct' berurutan agar membentuk array tepat 50 elemen
+        // Kolom-kolom yang tidak tersentuh (misal kolom 48, 49, 50) akan otomatis bernilai 0
+        $correctScores = [];
+        for ($i = 1; $i <= $totalConfigColumns; $i++) {
+            $correctScores[] = $perColumn[$i]['correct'];
+        }
 
-        // 5. Siapkan array nilai per kolom untuk kalkulasi indikator
-        $correctPerColumn  = array_column($perColumn, 'correct');
-        $answeredPerColumn = array_column($perColumn, 'answered');
-        $totalColumns      = count($perColumn);
+        // 5. KALKULASI 4 INDIKATOR DENGAN ARRAY BERUKURAN UTUH (50 ITEM)
+        $pankerScore  = $this->calculatePanker($correctScores);
+        $tiankerScore = $this->calculateTianker($errorPerColumn); 
+        $hankerScore  = $this->calculateHanker($correctScores);
+        $pankerMeanRounded = round($pankerScore, 2); 
+        $jankerScore       = $this->calculateJanker($correctScores, $pankerMeanRounded);
+        
+        $accuracyPct  = $totalAnswered > 0 ? round(($totalCorrect / $totalAnswered) * 100, 2) : 0;
 
-        // 6. Hitung 4 indikator
-        $paceScore      = $this->calculatePace($totalCorrect, $totalColumns);
-        $accuracyScore  = $this->calculateAccuracy($totalCorrect, $totalAnswered);
-        $enduranceScore = $this->calculateEndurance($correctPerColumn);
-        $stabilityScore = $this->calculateStability($correctPerColumn, $paceScore);
+        // Mendapatkan Kategori Norma
+        $kategoriPanker  = $this->getKategoriPanker($pankerScore);
+        $kategoriTianker = $this->getKategoriTianker($tiankerScore);
+        $kategoriJanker  = $this->getKategoriJanker($jankerScore);
+        $kategoriHanker  = $this->getKategoriHanker($hankerScore);
 
-        // 7. Susun raw_data sesuai format yang dibutuhkan view & PDF
+        // Siapkan raw_data JSON untuk keperluan render grafik batang dashboard admin
         $rawData = [];
         foreach ($perColumn as $col => $data) {
             $rawData[] = [
                 'column'       => $col,
                 'answered'     => $data['answered'],
                 'correct'      => $data['correct'],
+                'errors'       => $errorPerColumn[$col] ?? 0,
                 'accuracy_pct' => $data['accuracy_pct'],
             ];
         }
 
-        // 8. Simpan hasil
+        // 6. Simpan / Perbarui Hasil ke Database
         KraepelinResult::updateOrCreate(
             ['test_session_id' => $this->testSession->id],
             [
-                'pace_score'      => $paceScore,
-                'accuracy_score'  => $accuracyScore,
-                'endurance_score' => $enduranceScore,
-                'stability_score' => $stabilityScore,
+                'pace_score'      => round($pankerScore, 3), 
+                'accuracy_score'  => $accuracyPct,            
+                'total_errors'    => $tiankerScore,           
+                'endurance_score' => round($hankerScore, 3),  
+                'stability_score' => round($jankerScore, 2),  
                 'total_answered'  => $totalAnswered,
                 'total_correct'   => $totalCorrect,
                 'raw_data'        => $rawData,
@@ -107,51 +122,114 @@ class KraepelinScoringService
         );
     }
 
-    // Kecepatan: rata-rata jawaban benar per kolom
-    private function calculatePace(int $totalCorrect, int $totalColumns): float
+    /**
+     * PANKER (Kecepatan Kerja): Rata-rata jawaban benar dibagi total kolom mutlak
+     */
+    private function calculatePanker(array $correctScores): float
     {
+        $totalColumns = config('kraepelin.total_columns', 50); 
         if ($totalColumns === 0) return 0;
-        return round($totalCorrect / $totalColumns, 2);
+        return array_sum($correctScores) / $totalColumns;
     }
 
-    // Ketelitian: persentase jawaban benar dari yang dijawab
-    private function calculateAccuracy(int $totalCorrect, int $totalAnswered): float
+    /**
+     * TIANKER (Ketelitian Kerja): Jumlah total seluruh error dan skip
+     */
+    private function calculateTianker(array $errorScores): int
     {
-        if ($totalAnswered === 0) return 0;
-        return round(($totalCorrect / $totalAnswered) * 100, 2);
+        return array_sum($errorScores);
     }
 
-    // Ketahanan: selisih rata-rata paruh kedua vs paruh pertama
-    // Positif = meningkat, Negatif = menurun, 0 = stabil
-    private function calculateEndurance(array $correctPerColumn): float
+    /**
+     * HANKER (Ketahanan Kerja): Gradien tren energi kerja dikali total kolom (50 * b)
+     */
+    private function calculateHanker(array $correctScores): float
     {
-        $total = count($correctPerColumn);
-        if ($total < 2) return 0;
+        $n = config('kraepelin.total_columns', 50);
+        if (count($correctScores) < 2) return 0;
 
-        $midPoint   = (int) floor($total / 2);
-        $firstHalf  = array_slice($correctPerColumn, 0, $midPoint);
-        $secondHalf = array_slice($correctPerColumn, $midPoint);
+        $sumX = 0; $sumY = 0; $sumXY = 0; $sumX2 = 0;
 
-        $avgFirst  = count($firstHalf)  > 0 ? array_sum($firstHalf)  / count($firstHalf)  : 0;
-        $avgSecond = count($secondHalf) > 0 ? array_sum($secondHalf) / count($secondHalf) : 0;
-
-        return round($avgSecond - $avgFirst, 2);
-    }
-
-    // Keajegan: standar deviasi jawaban benar per kolom
-    // Makin kecil = makin stabil / ajeg
-    private function calculateStability(array $correctPerColumn, float $mean): float
-    {
-        $total = count($correctPerColumn);
-        if ($total < 2) return 0;
-
-        $sumOfSquares = 0;
-        foreach ($correctPerColumn as $val) {
-            $sumOfSquares += pow(($val - $mean), 2);
+        foreach ($correctScores as $index => $y) {
+            $x = $index + 1; // Sumbu X mewakili nomor urut kolom (1, 2, 3... 50)
+            $sumX += $x;
+            $sumY += $y;
+            $sumXY += ($x * $y);
+            $sumX2 += ($x * $x);
         }
 
-        // Gunakan sample standard deviation (n-1)
-        $variance = $sumOfSquares / ($total - 1);
-        return round(sqrt($variance), 2);
+        $numerator   = ($n * $sumXY) - ($sumX * $sumY);
+        $denominator = ($n * $sumX2) - ($sumX * $sumX);
+
+        if ($denominator == 0) return 0; 
+
+        $b = $numerator / $denominator; 
+        
+        return $b * $n; 
+    }
+
+    /**
+     * JANKER (Keajegan Kerja): Sum Fd / 50 Mutlak
+     */
+    private function calculateJanker(array $correctScores, float $pankerMean): float
+    {
+        $totalColumns = config('kraepelin.total_columns', 50); 
+        if ($totalColumns === 0) return 0;
+
+        $sumFd = 0.0;
+        $pankerRound = round($pankerMean, 2); // Samakan pembulatan dengan Excel (7.38)
+
+        foreach ($correctScores as $score) {
+            // Kita hilangkan "if ($score > 0)" agar semua indeks kolom (1 sampai 50) 
+            // diproses secara adil dan merata seperti array di Excel.
+            $dev = abs($score - $pankerRound);
+            
+            // Jika skornya 0, pastikan tidak menambah deviasi palsu 
+            // (karena di Excel f = 0, maka Fd = 0 * dev = 0)
+            if ($score == 0) {
+                $dev = 0;
+            }
+
+            $sumFd += $dev;
+        }
+
+        // Total Sum Fd dibagi 50 mutlak
+        return $sumFd / $totalColumns;
+    }
+
+    // ========================================================
+    // GETTER KATEGORI NORMA (DIADAPTASI DARI TEMPLATE EXCEL)
+    // ========================================================
+
+    public function getKategoriPanker(float $nilai): string {
+        if ($nilai >= 16.044) return 'Baik Sekali';
+        if ($nilai >= 13.362) return 'Baik';
+        if ($nilai >= 10.963) return 'Sedang';
+        if ($nilai >= 8.116)  return 'Kurang';
+        return 'Kurang Sekali';
+    }
+
+    public function getKategoriTianker(int $nilai): string {
+        if ($nilai === 0) return 'Baik Sekali';
+        if ($nilai <= 2)  return 'Baik';
+        if ($nilai <= 14) return 'Sedang';
+        if ($nilai <= 21) return 'Kurang';
+        return 'Kurang Sekali';
+    }
+
+    public function getKategoriJanker(float $nilai): string {
+        if ($nilai <= 3)  return 'Baik Sekali';
+        if ($nilai <= 7)  return 'Baik';
+        if ($nilai <= 10) return 'Sedang';
+        if ($nilai <= 14) return 'Kurang';
+        return 'Kurang Sekali';
+    }
+
+    public function getKategoriHanker(float $nilai): string {
+        if ($nilai >= 2.497)  return 'Baik Sekali';
+        if ($nilai >= 1.015)  return 'Baik';
+        if ($nilai >= -0.468) return 'Sedang';
+        if ($nilai >= -1.195) return 'Kurang'; 
+        return 'Kurang Sekali';
     }
 }

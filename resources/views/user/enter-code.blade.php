@@ -2,7 +2,7 @@
 @section('title', 'Masukkan Kode Akses')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/enter-code.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 @endpush
 
@@ -28,13 +28,15 @@
                             @error('access_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         
-                        <button type="submit" class="btn btn-digitama w-100 btn-lg shadow-sm">
+                        <button type="submit" class="btn btn-submit-modern w-100 btn-lg shadow-sm">
                             Mulai Tes Sekarang
                         </button>
                     </form>
                     
                     <div class="mt-3">
-                        <a href="{{ route('home') }}" class="text-decoration-none text-muted">← Kembali ke Beranda</a>
+                        <a href="{{ route('home') }}" class="btn btn-light px-4 py-2 border rounded-pill text-decoration-none shadow-sm fw-semibold d-inline-flex align-items-center justify-content-center" style="color: #475569;">
+                            <i class="fas fa-arrow-left me-2"></i> Kembali ke Beranda
+                        </a>
                     </div>
                 </div>
             </div>

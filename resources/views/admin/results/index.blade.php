@@ -145,9 +145,8 @@
                     @endif
 
                     @if(request('jenis_tes'))
-                    <span class="badge rounded-pill px-3 py-2
-                        {{ request('jenis_tes') === 'PapiKostick' ? 'bg-blue text-white' : 'bg-purple text-white' }}"
-                        style="background:{{ request('jenis_tes') === 'PapiKostick' ? '#2563eb' : '#7c3aed' }}">
+                    <span class="badge rounded-pill px-3 py-2"
+                        style="background:{{ request('jenis_tes') === 'PapiKostick' ? '#2563eb' : '#7c3aed' }}; color: white;">
                         <i class="bi bi-journal-check me-1"></i>{{ request('jenis_tes') === 'PapiKostick' ? 'PapiKostick' : 'Kraepelin' }}
                     </span>
                     @endif
@@ -183,7 +182,7 @@
     <form method="POST" action="{{ route('admin.results.bulk') }}" id="bulkForm">
         @csrf
         
-        {{-- Bulk Action Bar (Glassmorphism Effect) --}}
+        {{-- Bulk Action Bar --}}
         <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);">
             <div class="card-body py-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
@@ -192,11 +191,11 @@
                         <span class="fw-bold" id="selectedCount">0</span> <small>Terpilih</small>
                     </div>
                     <div class="vr mx-1 d-none d-md-block"></div>
-                    <select name="action" class="form-select form-select-sm border-0 bg-light" style="width:200px; border-radius: 8px;" required>
+                    <select name="action" id="bulkActionSelect" class="form-select form-select-sm border-0 bg-light" style="width:200px; border-radius: 8px;" required>
                         <option value="">-- Pilih Aksi Massal --</option>
                         <option value="delete">Hapus Permanen</option>
                     </select>
-                    <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 8px;" onclick="return confirmBulk()">
+                    <button type="submit" class="btn btn-sm btn-primary px-3 shadow-sm" style="border-radius: 8px;" onclick="return confirmBulk(event)">
                         Terapkan
                     </button>
                 </div>
@@ -256,20 +255,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            {{-- Checkbox Master (Pilih Semua) --}}
                             <th class="ps-4 py-3" style="width: 40px;">
                                 <input class="form-check-input shadow-sm" type="checkbox" id="checkAll">
                             </th>
-
-                            <th class="ps-2 text-muted small fw-bold text-uppercase py-3">
-                                Nama Peserta
-                            </th>
-
-                            {{-- Kolom Jenis Tes --}}
-                            <th class="text-muted small fw-bold text-uppercase py-3">
-                                Jenis Tes
-                            </th>
-
+                            <th class="ps-2 text-muted small fw-bold text-uppercase py-3">Nama Peserta</th>
+                            <th class="text-muted small fw-bold text-uppercase py-3">Jenis Tes</th>
                             <th class="text-muted small fw-bold text-uppercase py-3">
                                 <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                                         'sort_by'    => 'durasi',
@@ -284,7 +274,6 @@
                                     @endif
                                 </a>
                             </th>
-
                             <th class="text-muted small fw-bold text-uppercase py-3">
                                 <a href="{{ route('admin.results.index', array_merge(request()->query(), [
                                         'sort_by'    => 'completed_at',
@@ -299,7 +288,6 @@
                                     @endif
                                 </a>
                             </th>
-
                             <th class="text-center text-muted small fw-bold text-uppercase py-3">Status</th>
                             <th class="text-center text-muted small fw-bold text-uppercase py-3">Aksi</th>
                         </tr>
@@ -311,12 +299,9 @@
                         $isPapi   = !in_array($jenisTes, ['krempelin', 'kraepelin']);
                     @endphp
                     <tr>
-                        {{-- Checkbox Item --}}
-                        <td class="ps-4">
+                        <td>
                             <input class="form-check-input item-check shadow-sm" type="checkbox" name="ids[]" value="{{ $s->id }}">
                         </td>
-
-                        {{-- Nama --}}
                         <td class="ps-2">
                             <div class="d-flex align-items-center">
                                 <div class="avatar-box me-3"
@@ -333,25 +318,19 @@
                                 </div>
                             </div>
                         </td>
-
-                        {{-- Jenis Tes --}}
                         <td>
                             @if($isPapi)
                                 <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
                                       style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:600;">
-                                    <i class="bi bi-person-lines-fill"></i>
-                                    PAPI-Kostick
+                                    <i class="bi bi-person-lines-fill"></i> PAPI-Kostick
                                 </span>
                             @else
                                 <span class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center gap-1"
                                       style="background:#f5f3ff; color:#6d28d9; font-size:11px; font-weight:600;">
-                                    <i class="bi bi-calculator"></i>
-                                    Kraepelin
+                                    <i class="bi bi-calculator"></i> Kraepelin
                                 </span>
                             @endif
                         </td>
-
-                        {{-- Durasi --}}
                         <td>
                             @if($s->started_at && $s->completed_at)
                             @php
@@ -365,71 +344,41 @@
                                 <div>
                                     <span class="small fw-semibold">{{ $decimalMinutes }}</span>
                                     <span class="text-muted" style="font-size:10px"> menit</span>
-                                    <div class="text-muted" style="font-size:10px">
-                                        ({{ $menit }}m {{ $detik }}s)
-                                    </div>
+                                    <div class="text-muted" style="font-size:10px">({{ $menit }}m {{ $detik }}s)</div>
                                 </div>
                             </div>
                             @else
                                 <span class="text-muted small">-</span>
                             @endif
                         </td>
-
-                        {{-- Waktu Selesai --}}
                         <td>
-                            <div class="small fw-semibold text-dark">
-                                {{ $s->completed_at?->format('d M Y') ?? '-' }}
-                            </div>
-                            <div class="text-muted" style="font-size:11px">
-                                Pukul {{ $s->completed_at?->format('H:i') ?? '-' }} WIB
-                            </div>
+                            <div class="small fw-semibold text-dark">{{ $s->completed_at?->format('d M Y') ?? '-' }}</div>
+                            <div class="text-muted" style="font-size:11px">Pukul {{ $s->completed_at?->format('H:i') ?? '-' }} WIB</div>
                         </td>
-
-                        {{-- Status --}}
                         <td class="text-center">
                             @if($s->completed_at)
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2"
-                                      style="font-size:11px">
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2" style="font-size:11px">
                                     <i class="bi bi-check-circle me-1"></i>Selesai
                                 </span>
                             @else
-                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2"
-                                      style="font-size:11px">
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2" style="font-size:11px">
                                     <i class="bi bi-hourglass-split me-1"></i>Berlangsung
                                 </span>
                             @endif
                         </td>
-
-                        {{-- Aksi --}}
                         <td class="text-center">
                             <div class="btn-group shadow-sm rounded-3 overflow-hidden d-inline-flex">
-                                {{-- Tombol Detail --}}
-                                <a href="{{ route('admin.results.show', $s->id) }}"
-                                class="btn btn-sm btn-white border-end px-3 action-btn"
-                                title="Lihat Detail">
-                                    <i class="bi bi-eye-fill"
-                                    style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
+                                <a href="{{ route('admin.results.show', $s->id) }}" class="btn btn-sm btn-white border-end px-3 action-btn" title="Lihat Detail">
+                                    <i class="bi bi-eye-fill" style="color:{{ $isPapi ? '#2563eb' : '#7c3aed' }}"></i>
                                 </a>
-                                
-                                {{-- Tombol PDF --}}
-                                <a href="{{ route('admin.results.pdf', $s->id) }}"
-                                class="btn btn-sm btn-white border-end px-3 action-btn"
-                                title="Unduh PDF"
-                                target="_blank">
+                                <a href="{{ route('admin.results.pdf', $s->id) }}" class="btn btn-sm btn-white border-end px-3 action-btn" title="Unduh PDF" target="_blank">
                                     <i class="bi bi-file-pdf-fill text-danger"></i>
                                 </a>
-
-                                {{-- Tombol Hapus --}}
-                                <form action="{{ route('admin.results.destroy', $s->id) }}" method="POST" class="m-0 p-0">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" 
-                                            class="btn btn-sm btn-white px-3 action-btn action-btn-delete" 
-                                            title="Hapus Permanen" 
-                                            onclick="return confirm('Apakah Anda yakin ingin menghapus permanen data hasil tes milik {{ $s->accessRequest->name }}?')">
-                                        <i class="bi bi-trash3-fill text-secondary"></i>
-                                    </button>
-                                </form>
+                                {{-- Tombol hapus satuan (Dipisahkan agar tidak merusak struktur form pembungkus massal) --}}
+                                <button type="button" class="btn btn-sm btn-white px-3 action-btn action-btn-delete" title="Hapus Permanen" 
+                                        onclick="if(confirm('Apakah Anda yakin ingin menghapus data milik {{ $s->accessRequest->name }}?')) { document.getElementById('delete-single-{{ $s->id }}').submit(); }">
+                                    <i class="bi bi-trash3-fill text-secondary"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -452,8 +401,7 @@
             <div class="card-footer bg-white border-0 py-3 px-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
-                        Menampilkan {{ $sessions->firstItem() }}–{{ $sessions->lastItem() }}
-                        dari {{ $sessions->total() }} data
+                        Menampilkan {{ $sessions->firstItem() }}–{{ $sessions->lastItem() }} dari {{ $sessions->total() }} data
                     </small>
                     {{ $sessions->links() }}
                 </div>
@@ -461,9 +409,14 @@
             @endif
         </div>
     </form>
-    {{-- ============================== --}}
-    {{-- AKHIR FORM BULK ACTION --}}
-    {{-- ============================== --}}
+
+    {{-- Kumpulan Form Tersembunyi untuk Delete Single Row --}}
+    @foreach($sessions as $s)
+        <form id="delete-single-{{ $s->id }}" action="{{ route('admin.results.destroy', $s->id) }}" method="POST" style="display: none;">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endforeach
 
 </div>
 
@@ -484,94 +437,78 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
     }
-    /* Animasi Hover untuk Tombol Aksi */
-    .action-btn {
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    .action-btn:hover {
-        background-color: #f8fafc; /* Memberikan efek redup/abu-abu sangat terang */
-    }
-
-    .action-btn i {
-        display: inline-block;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efek membesar membal (bouncy) */
-    }
-
-    .action-btn:hover i {
-        transform: scale(1.2); /* Ikon membesar 20% saat dihover */
-    }
-
-    /* Khusus tombol hapus: ikon berubah menjadi merah saat dihover */
-    .action-btn-delete:hover i.text-secondary {
-        color: #ef4444 !important; /* Warna merah tajam */
-    }
+    .action-btn { transition: background-color 0.2s ease-in-out; }
+    .action-btn:hover { background-color: #f8fafc; }
+    .action-btn i { display: inline-block; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .action-btn:hover i { transform: scale(1.2); }
+    .action-btn-delete:hover i { color: #ef4444 !important; }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkAll = document.getElementById('checkAll');
-        const itemChecks = document.querySelectorAll('.item-check');
         const selectedCount = document.getElementById('selectedCount');
 
-        // Fungsi update angka badge terpilih
         function updateCount() {
             const count = document.querySelectorAll('.item-check:checked').length;
             if(selectedCount) selectedCount.textContent = count;
         }
 
-        // Event listener Master Checkbox (Check All di header)
         if (checkAll) {
             checkAll.addEventListener('change', function() {
-                itemChecks.forEach(check => {
+                document.querySelectorAll('.item-check').forEach(check => {
                     check.checked = this.checked;
                 });
                 updateCount();
             });
         }
 
-        // Event listener untuk setiap item checkbox
-        itemChecks.forEach(check => {
-            check.addEventListener('change', function() {
-                const allChecked = document.querySelectorAll('.item-check:checked').length === itemChecks.length;
-                if(checkAll) checkAll.checked = allChecked;
+        // Gunakan Event Delegation agar checkbox di baris tabel manapun tetap terdeteksi
+        document.querySelector('table').addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('item-check')) {
+                const totalItems = document.querySelectorAll('.item-check').length;
+                const totalChecked = document.querySelectorAll('.item-check:checked').length;
+                if(checkAll) checkAll.checked = (totalItems === totalChecked && totalItems > 0);
                 updateCount();
-            });
+            }
         });
+
+        // Daftarkan fungsi ke objek window agar global scope mengenali atribut tag HTML onclick
+        window.selectAll = function() {
+            if(checkAll) checkAll.checked = true;
+            document.querySelectorAll('.item-check').forEach(c => c.checked = true);
+            updateCount();
+        };
+
+        window.deselectAll = function() {
+            if(checkAll) checkAll.checked = false;
+            document.querySelectorAll('.item-check').forEach(c => c.checked = false);
+            updateCount();
+        };
+
+        window.confirmBulk = function(event) {
+            const action = document.getElementById('bulkActionSelect').value;
+            const count = document.querySelectorAll('.item-check:checked').length;
+            
+            if (count === 0) {
+                alert('Silakan pilih minimal satu data peserta terlebih dahulu!');
+                event.preventDefault();
+                return false;
+            }
+            
+            if (!action) {
+                alert('Silakan pilih aksi massal terlebih dahulu dari menu dropdown!');
+                event.preventDefault();
+                return false;
+            }
+            
+            const konfirmasi = confirm(`Apakah Anda yakin ingin menghapus permanen ${count} data terpilih?`);
+            if(!konfirmasi) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        };
     });
-
-    // Fungsi untuk tombol "Pilih Semua" (di Action Bar)
-    function selectAll() {
-        const checkAll = document.getElementById('checkAll');
-        if(checkAll) checkAll.checked = true;
-        document.querySelectorAll('.item-check').forEach(c => c.checked = true);
-        document.getElementById('selectedCount').textContent = document.querySelectorAll('.item-check').length;
-    }
-
-    // Fungsi untuk tombol "Batal" (di Action Bar)
-    function deselectAll() {
-        const checkAll = document.getElementById('checkAll');
-        if(checkAll) checkAll.checked = false;
-        document.querySelectorAll('.item-check').forEach(c => c.checked = false);
-        document.getElementById('selectedCount').textContent = '0';
-    }
-
-    // Validasi alert sebelum menekan tombol "Terapkan"
-    function confirmBulk() {
-        const action = document.querySelector('select[name="action"]').value;
-        const count = document.querySelectorAll('.item-check:checked').length;
-        
-        if (count === 0) {
-            alert('Silakan pilih minimal satu data peserta terlebih dahulu!');
-            return false; // Membatalkan submit form
-        }
-        
-        if (!action) {
-            alert('Silakan pilih aksi massal terlebih dahulu dari menu dropdown!');
-            return false; // Membatalkan submit form
-        }
-        
-        return confirm(`Apakah Anda yakin ingin menerapkan aksi ini pada ${count} data terpilih?`);
-    }
 </script>
 @endsection

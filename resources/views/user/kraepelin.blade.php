@@ -25,15 +25,36 @@
 
     {{-- Timer --}}
     <div class="mb-3">
+
+        {{-- Timer Total --}}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted fw-semibold">
+                <i class="bi bi-hourglass-split me-1"></i>Sisa Waktu Total
+            </small>
+            <span class="fw-bold" id="totalTimerText"
+                style="font-size:15px; color:#1d4ed8; font-family:monospace">
+                {{ gmdate('i:s', $timeLeft) }}
+            </span>
+        </div>
+        <div class="progress mb-3" style="height:5px; border-radius:4px; background:#dbeafe">
+            <div class="progress-bar"
+                id="totalTimerBar"
+                style="width:{{ ($timeLeft / $config['total_time']) * 100 }}%;
+                        background:#2563eb; transition:width 1s linear">
+            </div>
+        </div>
+
+        {{-- Timer Kolom --}}
         <div class="d-flex justify-content-between mb-1">
             <small class="text-muted">
-                <i class="bi bi-stopwatch me-1"></i>Waktu tersisa
+                <i class="bi bi-stopwatch me-1"></i>Waktu Kolom {{ $currentColumn }}
             </small>
             <small class="fw-bold" id="timerText">{{ $config['time_per_column'] }}s</small>
         </div>
         <div class="timer-bar">
             <div class="timer-fill" id="timerFill" style="width:100%"></div>
         </div>
+
     </div>
 
     {{-- Header kolom --}}
@@ -59,10 +80,6 @@
             $halfRows  = (int) ceil($totalRows / 2); // 13 kiri, 13 kanan
         @endphp
 
-        {{-- 
-            Render dalam 2 kolom visual, tapi urutan input (tabindex)
-            tetap berurutan 1-26 dari atas ke bawah (kiri dulu, lanjut kanan)
-        --}}
         <div class="row g-2">
 
             {{-- Kolom KIRI: soal 0 - (halfRows-1) --}}
@@ -135,109 +152,110 @@
 
 @push('scripts')
 <script>
-const totalTime  = {{ $config['time_per_column'] }};
-const totalRows  = {{ $config['rows_per_column'] }};
-let   timeLeft   = totalTime;
-let   timerActive = true;
+const colTime     = {{ $config['time_per_column'] }};
+const totalConfig = {{ $config['total_time'] }};
+const form        = document.getElementById('kraepelinForm');
 
-const timerFill = document.getElementById('timerFill');
-const timerText = document.getElementById('timerText');
-const form      = document.getElementById('kraepelinForm');
+// Timer kolom
+let colTimeLeft  = colTime;
+const timerFill  = document.getElementById('timerFill');
+const timerText  = document.getElementById('timerText');
 
-// Ambil semua input diurutkan berdasarkan data-index (0, 1, 2, ... 25)
-// Ini memastikan navigasi keyboard berurutan meskipun input dibagi 2 kolom visual
-const inputs = Array.from(document.querySelectorAll('.digit-input'))
-    .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
+// Timer total
+let totalTimeLeft    = {{ $timeLeft }};
+const totalBar       = document.getElementById('totalTimerBar');
+const totalTimerText = document.getElementById('totalTimerText');
 
-// Fokus ke input pertama
-inputs[0]?.focus();
+function formatTime(seconds) {
+    const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    return `${m}:${s}`;
+}
 
-// Navigasi dan input handler
-inputs.forEach((input, idx) => {
-
-    // Saat user mengetik
-    input.addEventListener('input', function () {
-        // Ambil hanya 1 digit terakhir
-        if (this.value.length > 1) {
-            this.value = this.value.slice(-1);
-        }
-
-        const val = parseInt(this.value);
-        if (isNaN(val) || val < 0 || val > 9) {
-            this.value = '';
-            return;
-        }
-
-        // Auto pindah ke input berikutnya
-        if (idx < inputs.length - 1) {
-            inputs[idx + 1].focus();
-        }
-    });
-
-    // Navigasi keyboard
-    input.addEventListener('keydown', function (e) {
-
-        // Enter / Arrow Down → input berikutnya
-        if ((e.key === 'Enter' || e.key === 'ArrowDown')) {
-            e.preventDefault();
-            if (idx < inputs.length - 1) {
-                inputs[idx + 1].focus();
-            } else {
-                form.submit();
-            }
-        }
-
-        // Arrow Up → input sebelumnya
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (idx > 0) inputs[idx - 1].focus();
-        }
-
-        // Backspace saat kosong → kembali ke atas
-        if (e.key === 'Backspace' && this.value === '' && idx > 0) {
-            e.preventDefault();
-            inputs[idx - 1].focus();
-        }
-    });
-
-    // Scroll ke input yang sedang aktif
-    input.addEventListener('focus', function () {
-        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
-});
-
-// Timer countdown
+// Jalankan kedua timer bersamaan
 const timer = setInterval(() => {
-    if (!timerActive) return;
-    timeLeft--;
 
-    const pct = (timeLeft / totalTime) * 100;
-    timerFill.style.width = pct + '%';
-    timerText.textContent = timeLeft + 's';
+    // ===== Timer Kolom =====
+    colTimeLeft--;
+    const colPct = (colTimeLeft / colTime) * 100;
+    timerFill.style.width = colPct + '%';
+    timerText.textContent = colTimeLeft + 's';
 
-    // Warna timer
     timerFill.className = 'timer-fill';
-    if (pct <= 20) {
+    if (colPct <= 20) {
         timerFill.classList.add('danger');
         timerText.style.color = '#ef4444';
-    } else if (pct <= 40) {
+    } else if (colPct <= 40) {
         timerFill.classList.add('warning');
         timerText.style.color = '#f59e0b';
     }
 
-    // Auto submit saat waktu habis
-    if (timeLeft <= 0) {
+    // ===== Timer Total =====
+    totalTimeLeft--;
+    const totalPct = (totalTimeLeft / totalConfig) * 100;
+    totalBar.style.width  = Math.max(0, totalPct) + '%';
+    totalTimerText.textContent = formatTime(Math.max(0, totalTimeLeft));
+
+    // Warna total timer saat menipis
+    if (totalPct <= 10) {
+        totalTimerText.style.color = '#ef4444';
+        totalBar.style.background  = '#ef4444';
+    } else if (totalPct <= 25) {
+        totalTimerText.style.color = '#f59e0b';
+        totalBar.style.background  = '#f59e0b';
+    }
+
+    // Timer kolom habis → pindah kolom
+    if (colTimeLeft <= 0) {
         clearInterval(timer);
-        timerActive = false;
+        timerText.textContent = 'Waktu kolom habis!';
+        form.submit();
+        return;
+    }
+
+    // Timer total habis → paksa selesai
+    if (totalTimeLeft <= 0) {
+        clearInterval(timer);
+        totalTimerText.textContent = '00:00';
         timerText.textContent = 'Waktu habis!';
         form.submit();
     }
+
 }, 1000);
 
-// Hentikan timer saat form disubmit manual
-form.addEventListener('submit', () => {
-    timerActive = false;
-    clearInterval(timer);
+// Hentikan timer saat submit manual
+form.addEventListener('submit', () => clearInterval(timer));
+
+// Input handlers
+const inputs = Array.from(document.querySelectorAll('.digit-input'))
+    .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
+
+inputs[0]?.focus();
+
+inputs.forEach((input, idx) => {
+    input.addEventListener('input', function () {
+        if (this.value.length > 1) this.value = this.value.slice(-1);
+        const val = parseInt(this.value);
+        if (isNaN(val) || val < 0 || val > 9) { this.value = ''; return; }
+        if (idx < inputs.length - 1) inputs[idx + 1].focus();
+    });
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            idx < inputs.length - 1 ? inputs[idx + 1].focus() : form.submit();
+        }
+        if (e.key === 'ArrowUp' && idx > 0) {
+            e.preventDefault(); inputs[idx - 1].focus();
+        }
+        if (e.key === 'Backspace' && this.value === '' && idx > 0) {
+            e.preventDefault(); inputs[idx - 1].focus();
+        }
+    });
+
+    input.addEventListener('focus', function () {
+        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
 });
 </script>
 @endpush
