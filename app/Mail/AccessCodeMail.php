@@ -39,7 +39,7 @@ class AccessCodeMail extends Mailable
     public function envelope()
     {
         return new Envelope(
-            from: config('mail.from.address', 'no-reply@papikostick.com'),
+            from: config('mail.from.address', 'no-reply@digitama.com'),
             subject: 'Kode Akses Psikotes Anda',
         );
     }

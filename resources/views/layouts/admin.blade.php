@@ -16,7 +16,7 @@
         :root {
             --sidebar-bg: #0f172a; /* Navy Deep */
             --sidebar-accent: #1e293b;
-            --primary-color: #38bdf8; /* Sky Blue */
+            --primary-color: #12c6bd; /* Sky Blue */
             --text-muted: #94a3b8;
             --glass-bg: rgba(255, 255, 255, 0.03);
         }
@@ -162,7 +162,7 @@
             border-top: 1px solid #f1f5f9;
         }
         .bg-blue-gradient {
-        background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%) !important;
+        background: linear-gradient(135deg, #12c6bd 0%, #0ea5e9 100%) !important;
         color: #ffffff !important;
         }
     

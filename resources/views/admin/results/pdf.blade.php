@@ -15,7 +15,7 @@
 
         /* ===== HEADER ===== */
         .header {
-            background: #1a56db;
+            background: #12c6bd;
             color: white;
             padding: 18px 24px;
             margin-bottom: 16px;
@@ -39,7 +39,7 @@
         .info-box h3 {
             font-size: 11px;
             font-weight: bold;
-            color: #1a56db;
+            color: #12c6bd;
             margin-bottom: 8px;
             border-bottom: 1px solid #dde3ef;
             padding-bottom: 5px;
@@ -59,7 +59,7 @@
             font-size: 11px;
             font-weight: bold;
             color: white;
-            background: #1a56db;
+            background: #12c6bd;
             padding: 5px 10px;
         }
         table.score-table {
@@ -86,7 +86,7 @@
         .scale-letter {
             font-weight: bold;
             font-size: 13px;
-            color: #1a56db;
+            color: #12c6bd;
             text-align: center;
         }
         .score-num {
@@ -106,7 +106,7 @@
             font-size: 11px;
             font-weight: bold;
             color: white;
-            background: #1a56db;
+            background: #12c6bd;
             padding: 5px 10px;
         }
         .chart-box {

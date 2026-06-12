@@ -15,7 +15,7 @@
 
         /* ===== HEADER ===== */
         .header {
-            background: #6d28d9;
+            background: #12c6bd;
             color: white;
             padding: 18px 24px;
             margin-bottom: 16px;
@@ -32,7 +32,7 @@
             background: #faf5ff;
         }
         .info-box h3 {
-            font-size:11px; font-weight:bold; color:#6d28d9;
+            font-size:11px; font-weight:bold; color:#12c6bd;
             margin-bottom:8px; border-bottom:1px solid #dde3ef; padding-bottom:5px;
         }
         .info-grid { width:100%; }
@@ -44,7 +44,7 @@
         .scores-section { margin:0 24px 16px; }
         .scores-title {
             font-size:11px; font-weight:bold; color:white;
-            background:#6d28d9; padding:5px 10px;
+            background:#12c6bd; padding:5px 10px;
         }
         .scores-grid {
             width:100%; border-collapse:collapse;
@@ -71,13 +71,13 @@
             font-weight: bold; border-radius: 3px; color: white; margin-top: 6px;
         }
         .bg-success { background: #15803d; }
-        .bg-primary { background: #1d4ed8; }
+        .bg-primary { background: #12c6bd; }
         .bg-warning { background: #b45309; }
         .bg-danger  { background: #b91c1c; }
         .bg-dark    { background: #374151; }
 
         .text-success { color: #15803d; }
-        .text-primary { color: #1d4ed8; }
+        .text-primary { color: #12c6bd; }
         .text-warning { color: #b45309; }
         .text-danger  { color: #b91c1c; }
         .text-dark    { color: #374151; }
@@ -86,7 +86,7 @@
         .summary-section { margin:0 24px 16px; }
         .summary-title {
             font-size:11px; font-weight:bold; color:white;
-            background:#6d28d9; padding:5px 10px;
+            background:#12c6bd; padding:5px 10px;
         }
         .summary-grid { width:100%; border-collapse:collapse; border:1px solid #dde3ef; }
         .summary-cell {
@@ -101,7 +101,7 @@
         .chart-section { margin:0 24px 16px; }
         .chart-title {
             font-size:11px; font-weight:bold; color:white;
-            background:#6d28d9; padding:5px 10px;
+            background:#12c6bd; padding:5px 10px;
         }
         .chart-box {
             border:1px solid #dde3ef; border-top:none;
@@ -111,14 +111,14 @@
         .chart-col-table td { padding:1px 4px 1px 0; vertical-align:middle; }
         .col-label {
             width:20px; font-weight:bold; font-size:9px;
-            color:#6d28d9; text-align:center;
+            color:#12c6bd; text-align:center;
         }
         .bar-bg {
             background:#ede9fe; height:10px;
             border-radius:2px; width:100%;
         }
-        .bar-fill-ans  { background:#6d28d9; height:10px; border-radius:2px; }
-        .bar-fill-corr { background:#16a34a; height:10px; border-radius:2px; }
+        .bar-fill-ans  { background:#12c6bd; height:10px; border-radius:2px; }
+        .bar-fill-corr { background:#12c6bd; height:10px; border-radius:2px; }
         .bar-val {
             width:28px; font-size:9px; font-weight:bold;
             color:#374151; text-align:right;
@@ -128,13 +128,13 @@
         .detail-section { margin:0 24px 14px; }
         .detail-title {
             font-size:11px; font-weight:bold; color:white;
-            background:#6d28d9; padding:5px 10px;
+            background:#12c6bd; padding:5px 10px;
         }
         table.detail-table {
             width:100%; border-collapse:collapse; font-size:9.5px;
         }
         table.detail-table th {
-            background:#ede9fe; color:#4c1d95;
+            background:#ede9fe; color:#12c6bd;
             padding:4px 6px; text-align:left;
             border:1px solid #ddd6fe; font-size:9px;
         }
@@ -143,7 +143,7 @@
             vertical-align:middle;
         }
         table.detail-table tr:nth-child(even) td { background:#faf5ff; }
-        .col-num { font-weight:bold; color:#6d28d9; text-align:center; }
+        .col-num { font-weight:bold; color:#12c6bd; text-align:center; }
         .acc-high { color:#15803d; font-weight:bold; }
         .acc-mid  { color:#d97706; font-weight:bold; }
         .acc-low  { color:#dc2626; font-weight:bold; }
